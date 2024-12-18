@@ -17,9 +17,8 @@ class VideoAnalyzer:
         
     def _load_prompts(self):
         """Load prompts from files."""
-        self.frame_prompt = self.prompt_loader.get_by_index(0)  # First prompt
-        self.video_prompt = self.prompt_loader.get_by_index(1)  # Second prompt
-        self.narrative_prompt = self.prompt_loader.get_by_index(2)  # Third prompt
+        self.frame_prompt = self.prompt_loader.get_by_index(0)  # Frame Analysis prompt
+        self.video_prompt = self.prompt_loader.get_by_index(1)  # Video Reconstruction prompt
 
     def _format_previous_analyses(self) -> str:
         """Format previous frame analyses for inclusion in prompt."""
@@ -79,22 +78,20 @@ class VideoAnalyzer:
         
         analysis_text = "\n\n".join(frame_notes)
         
-        # Include transcript information if available and of good quality
+        # Get first frame analysis
+        first_frame_text = ""
+        if frame_analyses and len(frame_analyses) > 0:
+            first_frame_text = frame_analyses[0].get('response', '')
+        
+        # Include transcript information if available
         transcript_text = ""
         if transcript and transcript.text.strip():
-            transcript_text = (
-                f"\nAudio Transcript:\n{transcript.text}\n\n"
-                f"Detailed segments:\n"
-            )
-            for segment in transcript.segments:
-                transcript_text += (
-                    f"[{segment['start']:.1f}s - {segment['end']:.1f}s]: "
-                    f"{segment['text']}\n"
-                )
+            transcript_text = transcript.text
         
-        prompt = (f"{self.video_prompt}\n\n"
-                 f"Frame Notes:\n{analysis_text}\n\n"
-                 f"{transcript_text}")
+        # Replace tokens in the prompt template
+        prompt = self.video_prompt.replace("{FRAME_NOTES}", analysis_text)
+        prompt = prompt.replace("{FIRST_FRAME}", first_frame_text)
+        prompt = prompt.replace("{TRANSCRIPT}", transcript_text)
         
         try:
             response = self.client.generate(
@@ -107,41 +104,3 @@ class VideoAnalyzer:
         except Exception as e:
             logger.error(f"Error reconstructing video: {e}")
             return {"response": f"Error reconstructing video: {str(e)}"}
-
-    def enhance_narrative(self, technical_description: Dict[str, Any], 
-                         transcript: Optional[AudioTranscript] = None) -> Dict[str, Any]:
-        """Transform the technical video description into an engaging narrative."""
-        tech_desc = technical_description.get('response', '')
-        
-        # Get the first frame analysis if available
-        first_frame_context = ""
-        if self.previous_analyses and len(self.previous_analyses) > 0:
-            first_frame = self.previous_analyses[0]
-            first_frame_context = (
-                f"\nFirst Frame Analysis:\n"
-                f"{first_frame.get('response', 'No analysis available')}\n"
-            )
-        
-        # Include transcript context if available
-        transcript_context = ""
-        if transcript and transcript.text.strip():
-            transcript_context = f"\n\nSpoken content context:\n{transcript.text}\n"
-        
-        prompt = (f"{self.narrative_prompt}\n\n"
-                 f"Here's the first frame analysis to set the scene:\n"
-                 f"{first_frame_context}\n"
-                 f"Here's the technical description to transform:\n"
-                 f"{tech_desc}"
-                 f"{transcript_context}")
-        
-        try:
-            response = self.client.generate(
-                prompt=prompt,
-                model=self.model,
-                num_predict=500
-            )
-            logger.info("Successfully enhanced video narrative")
-            return {k: v for k, v in response.items() if k != "context"}
-        except Exception as e:
-            logger.error(f"Error enhancing narrative: {e}")
-            return {"response": f"Error enhancing narrative: {str(e)}"}

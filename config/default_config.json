@@ -18,11 +18,7 @@
         },
         {
             "name": "Video Reconstruction",
-            "path": "video_reconstruction.txt"
-        },
-        {
-            "name": "Narrative Generation",
-            "path": "narrate_storyteller.txt"
+            "path": "frame_analysis/describe.txt"
         }
     ],
     "output_dir": "output",

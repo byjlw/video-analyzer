@@ -1,6 +1,6 @@
 # Video Analysis using Llama3.2 Vision and OpenAI's Whisper Models locally
 
-A video analysis tool that combines Llama's 11B vision model Whisper to create a description by taking key frames, feeding them to the vision model to get details. It uses the details from each frame and the transcript, if avaialable to describe what's happening in the video. 
+A video analysis tool that combines Llama's 11B vision model and Whisper to create a description by taking key frames, feeding them to the vision model to get details. It uses the details from each frame and the transcript, if available, to describe what's happening in the video. 
 
 It's designed to run 100% locally, but allow support openrouter.
 
@@ -15,11 +15,25 @@ It's designed to run 100% locally, but allow support openrouter.
 - ⚙️ Highly configurable through command line arguments or config file
 
 ## Design
-- Get key frames
-- Get Audio
-- Describe each frame independently with prompt template
-- Compile all the responses and the transcription to describe the video
-- Narrate the response for more natural consumption
+The system operates in three stages:
+
+1. Frame Extraction & Audio Processing
+   - Uses OpenCV to extract key frames
+   - Processes audio using Whisper for transcription
+   - Handles poor quality audio with confidence checks
+
+2. Frame Analysis
+   - Analyzes each frame using vision LLM
+   - Each analysis includes context from previous frames
+   - Maintains chronological progression
+   - Uses frame_analysis.txt prompt template
+
+3. Video Reconstruction
+   - Combines frame analyses chronologically
+   - Integrates audio transcript
+   - Uses first frame to set the scene
+   - Creates comprehensive video description
+
 ![Description of the image](docs/design.png)
 
 ## Requirements
@@ -103,9 +117,9 @@ video-analyzer/
 ├── config/
 │   └── default_config.json
 ├── prompts/
-│   ├── frame_analysis.txt
-│   ├── video_reconstruction.txt
-│   └── narrate_storyteller.txt
+│   └── frame_analysis/
+│       ├── frame_analysis.txt
+│       └── describe.txt
 ├── output/             # Generated during runtime
 ├── video_analyzer.py   # Main script
 └── requirements.txt
@@ -226,60 +240,66 @@ The tool uses a cascading configuration system:
 
 The tool generates a JSON file (`analysis.json`) containing:
 - Metadata about the analysis
-- Frame-by-frame analysis
 - Audio transcript (if available)
-- Technical description of the video
-- Enhanced narrative description
+- Frame-by-frame analysis
+- Final video description
 
 ### Example Output Structure
 
 ```json
 {
-    "metadata": {
-        "client": "ollama",
-        "model": "llama3.2-vision",
-        "whisper_model": "medium",
-        "frames_per_minute": 10,
-        "frames_extracted": 15,
-        "audio_language": "en",
-        "transcription_successful": true
+  "metadata": {
+    "client": "openrouter",
+    "model": "meta-llama/llama-3.2-11b-vision-instruct:free",
+    "whisper_model": "medium",
+    "frames_per_minute": 60,
+    "duration_processed": null,
+    "frames_extracted": 8,
+    "frames_processed": 8,
+    "start_stage": 1,
+    "audio_language": "en",
+    "transcription_successful": true
+  },
+  "transcript": {
+    "text": " I've ever tasted. Good, I'm so happy. I'm glad we did the hot cocoa bombs. It's the  sugary-est though. I'm so glad we got her the hot cocoa.",
+    "segments": [
+      {
+        "text": " I've ever tasted. Good, I'm so happy. I'm glad we did the hot cocoa bombs. It's the",
+        "start": 0.0,
+        "end": 6.32,
+        "words": [
+          {
+            "word": " I've",
+            "start": 0.0,
+            "end": 0.26,
+            "probability": 0.22717513144016266
+          },
+          ...
+          {
+            "word": " the",
+            "start": 6.12,
+            "end": 6.32,
+            "probability": 0.34964463114738464
+          }
+        ]
+      }
+    ]
+  },
+  "frame_analyses": [
+    {
+      "response": "Frame 0\nThe scene is set in a snowy environment, with a person wearing a light blue hoodie and black pants standing in front of a building. The person is facing away from the camera, and their head is covered with a black and white patterned hat.\n\nAction/Movement\nThe person is standing still, with their arms at their sides. There is no visible movement or action in this frame.\n\nNew Information\nThere are no new objects, people, or text visible in this frame. The background is blurry, but it appears to be a building with windows and a door.\n\nContinuity Points\nThis frame does not provide any continuity points to previous frames, as it is the first frame in the sequence.\n\nKey Continuation Points:\n- The person's clothing and accessories, such as the hat and hoodie, may be important to note for future frames.\n- The building in the background may be a significant location in the narrative.\n- The snowy environment may be a recurring theme throughout the video."
     },
-    "transcript": {
-        "text": "...",
-        "segments": [...]
-    },
-    "frame_analyses": [...],
-    "technical_description": {...},
-    "enhanced_narrative": {...}
+    ...
+    {
+      "response": "Frame 7 (8.00 seconds)\nSetting/Scene: The snowy environment remains the same, with the building in the background still blurry.\n\nAction/Movement: The person is now walking towards the camera, their pace slightly faster than before. They are looking directly at the camera, and their facial expression appears neutral.\n\nNew Information: There are no new objects, people, or text visible in this frame. The audio remains the same as previous frames.\n\nContinuity Points: The person's clothing and accessories, as well as the building in the background, are consistent with previous frames. The snowy environment continues to be a significant part of the scene.\n\nKey Continuation Points:\n- The direction of the person's movement may indicate a destination or a goal.\n- The person's facial expression and body language may change as they approach the camera.\n- The steady pace of the person's movement may suggest a sense of purpose or urgency."
+    }
+  ],
+  "video_description": {
+    "response": "Here is a synthesized video summary based on the provided frame descriptions:\n\n**VIDEO SUMMARY**\n\nDuration: 8 seconds\n\n**Opening Description**\n\nThe video begins with a person standing in a snowy environment, wearing a light blue hoodie and black pants, with a black and white patterned hat covering their head. They are facing away from the camera, with their arms at their sides, and standing in front of a blurry building with windows and a door. The initial tone and context suggest a serene and peaceful atmosphere.\n\n**Narrative Development**\n\nAs the person turns to face the camera in Frame 1, their gaze is directed towards the camera, and their body is slightly turned to the right. This subtle movement sets the stage for their deliberate and purposeful actions throughout the video. In subsequent frames, the person walks towards the camera, their pace steady and purposeful, with their arms still at their sides. Their facial expression remains neutral, but their gaze is fixed on the camera, suggesting a sense of focus or interest. The direction of their movement may indicate a destination or goal, and the steady pace of their movement suggests a sense of purpose or urgency.\n\n**Technical Elements**\n\nThe camera appears to be stationary, with no notable movements described. The editing transitions are not explicitly mentioned, but the seamless progression from one frame to the next suggests a smooth and natural cut. The visual effects are minimal, with no notable changes in lighting or composition.\n\n**Closing Observations**\n\nThe video concludes with the person walking towards the camera, their pace slightly faster than before, and their gaze fixed on the camera. The final state of the scene is one of purposeful movement, with the person seemingly focused on a specific destination or goal. The narrative is coherent and engaging, with a clear progression from the initial setting to the final state.\n\nNote: This summary is based on direct observation of the first frame combined with detailed notes from subsequent frames."
+  }
 }
 ```
 
-## Troubleshooting
-
-### Common Issues
-
-1. **FFmpeg not found**
-   - Ensure FFmpeg is installed and accessible in your system PATH
-   - Try reinstalling FFmpeg using the instructions above
-
-2. **Ollama connection issues**
-   - Verify Ollama is running: `ollama serve`
-   - Check the URL in configuration matches your Ollama setup
-
-3. **OpenRouter issues**
-   - Verify your API key is correct
-   - Check your OpenRouter account has sufficient credits
-
-4. **Out of memory**
-   - Try reducing `frames_per_minute`
-   - Use a smaller Whisper model
-   - Process shorter video duration using `--duration`
-
-5. **Poor transcription quality**
-   - Try using a larger Whisper model
-   - Ensure good audio quality in the input video
-   - Tweek the prompts in `/prompts`
-   - Check for background noise in the video
 
 ## License
 
