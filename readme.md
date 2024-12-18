@@ -96,6 +96,8 @@ ollama serve
 
 If you want to use OpenRouter instead of Ollama:
 
+*Currently you can use llama 3.2 11b vision for free, and the default config uses this version automatically!*
+
 1. Get an API key from [OpenRouter](https://openrouter.ai)
 2. Either:
    - Pass it via command line: `--openrouter-key your-api-key`
