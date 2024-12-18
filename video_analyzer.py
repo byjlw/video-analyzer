@@ -3,6 +3,7 @@ from pathlib import Path
 import json
 import logging
 import shutil
+import sys
 from typing import Optional
 import torch
 import torch.backends.mps
@@ -59,6 +60,8 @@ def main():
     parser.add_argument("--duration", type=float, help="Duration in seconds to process")
     parser.add_argument("--keep-frames", action="store_true", help="Keep extracted frames after analysis")
     parser.add_argument("--whisper-model", type=str, help="Whisper model size (tiny, base, small, medium, large)")
+    parser.add_argument("--start-stage", type=int, default=1, help="Stage to start processing from (1-3)")
+    parser.add_argument("--max-frames", type=int, default=sys.maxsize, help="Maximum number of frames to process")
     args = parser.parse_args()
 
     # Load and update configuration
@@ -70,48 +73,62 @@ def main():
     output_dir = Path(config.get("output_dir"))
     client = create_client(config)
     model = get_model(config)
-    prompt_loader = PromptLoader(config.get("prompt_dir"))
+    prompt_loader = PromptLoader(config.get("prompt_dir"), config.get("prompts", []))
     
     try:
-        # Initialize audio processor and extract transcript
-        logger.info("Initializing audio processing...")
-        audio_processor = AudioProcessor(model_size=config.get("audio", {}).get("whisper_model", "medium"))
-        
-        logger.info("Extracting audio from video...")
-        audio_path = audio_processor.extract_audio(video_path, output_dir)
-        
-        logger.info("Transcribing audio...")
-        transcript = audio_processor.transcribe(audio_path)
-        if transcript is None:
-            logger.warning("Could not generate reliable transcript. Proceeding with video analysis only.")
-        
-        logger.info(f"Extracting frames from video using model {model}...")
-        processor = VideoProcessor(
-            video_path, 
-            output_dir / "frames", 
-            model
-        )
-        frames = processor.extract_keyframes(
-            frames_per_minute=config.get("frames", {}).get("per_minute", 60),
-            duration=config.get("duration")
-        )
-        
-        logger.info("Analyzing frames...")
-        analyzer = VideoAnalyzer(client, model, prompt_loader)
+        transcript = None
+        frames = []
         frame_analyses = []
-        for frame in frames:
-            analysis = analyzer.analyze_frame(frame)
-            frame_analyses.append(analysis)
+        technical_description = None
+        enhanced_narrative = None
+        
+        # Stage 1: Frame and Audio Processing
+        if args.start_stage <= 1:
+            # Initialize audio processor and extract transcript
+            logger.info("Initializing audio processing...")
+            audio_processor = AudioProcessor(model_size=config.get("audio", {}).get("whisper_model", "medium"))
             
-        logger.info("Reconstructing video description...")
-        technical_description = analyzer.reconstruct_video(
-            frame_analyses, frames, transcript
-        )
+            logger.info("Extracting audio from video...")
+            audio_path = audio_processor.extract_audio(video_path, output_dir)
+            
+            logger.info("Transcribing audio...")
+            transcript = audio_processor.transcribe(audio_path)
+            if transcript is None:
+                logger.warning("Could not generate reliable transcript. Proceeding with video analysis only.")
+            
+            logger.info(f"Extracting frames from video using model {model}...")
+            processor = VideoProcessor(
+                video_path, 
+                output_dir / "frames", 
+                model
+            )
+            frames = processor.extract_keyframes(
+                frames_per_minute=config.get("frames", {}).get("per_minute", 60),
+                duration=config.get("duration")
+            )
+            # Limit frames if max_frames specified
+            frames = frames[:args.max_frames]
+            
+        # Stage 2: Frame Analysis
+        if args.start_stage <= 2:
+            logger.info("Analyzing frames...")
+            analyzer = VideoAnalyzer(client, model, prompt_loader)
+            frame_analyses = []
+            for frame in frames:
+                analysis = analyzer.analyze_frame(frame)
+                frame_analyses.append(analysis)
+                
+            logger.info("Reconstructing video description...")
+            technical_description = analyzer.reconstruct_video(
+                frame_analyses, frames, transcript
+            )
 
-        logger.info("Enhancing narrative...")
-        enhanced_narrative = analyzer.enhance_narrative(
-            technical_description, transcript
-        )
+        # Stage 3: Narrative Enhancement
+        if args.start_stage <= 3:
+            logger.info("Enhancing narrative...")
+            enhanced_narrative = analyzer.enhance_narrative(
+                technical_description, transcript
+            )
         
         output_dir.mkdir(parents=True, exist_ok=True)
         results = {
@@ -122,6 +139,8 @@ def main():
                 "frames_per_minute": config.get("frames", {}).get("per_minute"),
                 "duration_processed": config.get("duration"),
                 "frames_extracted": len(frames),
+                "frames_processed": min(len(frames), args.max_frames),
+                "start_stage": args.start_stage,
                 "audio_language": transcript.language if transcript else None,
                 "transcription_successful": transcript is not None
             },
@@ -144,8 +163,10 @@ def main():
             print(transcript.text)
         else:
             print("No reliable transcript available")
-        print("\nEnhanced Video Narrative:")
-        print(enhanced_narrative.get("response", "No narrative generated"))
+            
+        if enhanced_narrative:
+            print("\nEnhanced Video Narrative:")
+            print(enhanced_narrative.get("response", "No narrative generated"))
         
         if not config.get("keep_frames"):
             cleanup_files(output_dir)

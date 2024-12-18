@@ -27,6 +27,12 @@ class Config:
                 logger.info(f"No user config found, loading default config from {self.default_config}")
                 with open(self.default_config) as f:
                     self.config = json.load(f)
+                    
+            # Ensure prompts is a list
+            if not isinstance(self.config.get("prompts", []), list):
+                logger.warning("Prompts in config is not a list, setting to empty list")
+                self.config["prompts"] = []
+                
         except Exception as e:
             logger.error(f"Error loading config: {e}")
             raise
@@ -51,7 +57,7 @@ class Config:
                 elif key == "model":
                     client = self.config["clients"]["default"]
                     self.config["clients"][client]["model"] = value
-                else:
+                elif key not in ["start_stage", "max_frames"]:  # Ignore these as they're command-line only
                     self.config[key] = value
 
     def save_user_config(self):

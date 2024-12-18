@@ -16,9 +16,9 @@ class VideoAnalyzer:
         
     def _load_prompts(self):
         """Load prompts from files."""
-        self.frame_prompt = self.prompt_loader.load_prompt("frame_analysis")
-        self.video_prompt = self.prompt_loader.load_prompt("video_reconstruction")
-        self.narrative_prompt = self.prompt_loader.load_prompt("narrate_storyteller")
+        self.frame_prompt = self.prompt_loader.get_by_index(0)  # First prompt
+        self.video_prompt = self.prompt_loader.get_by_index(1)  # Second prompt
+        self.narrative_prompt = self.prompt_loader.get_by_index(2)  # Third prompt
 
     def analyze_frame(self, frame: Frame) -> Dict[str, Any]:
         """Analyze a single frame using the LLM."""

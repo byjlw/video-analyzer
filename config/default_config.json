@@ -11,12 +11,28 @@
         }
     },
     "prompt_dir": "prompts",
+    "prompts": [
+        {
+            "name": "Frame Analysis",
+            "path": "frame_analysis.txt"
+        },
+        {
+            "name": "Video Reconstruction",
+            "path": "video_reconstruction.txt"
+        },
+        {
+            "name": "Narrative Generation",
+            "path": "narrate_storyteller.txt"
+        }
+    ],
     "output_dir": "output",
     "frames": {
         "per_minute": 60,
         "analysis_threshold": 10.0,
         "min_difference": 5.0,
-        "max_count": 30
+        "max_count": 30,
+        "start_stage": 1,
+        "max_frames": 2147483647
     },
     "response_length": {
         "frame": 300,
