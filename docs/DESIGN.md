@@ -1,5 +1,5 @@
 # Video Analyzer Design
-
+![Design](design.png)
 ## Core Workflow
 
 1. Frame Extraction

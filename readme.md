@@ -2,10 +2,10 @@
 
 A video analysis tool that combines Llama's 11B vision model and Whisper to create a description by taking key frames, feeding them to the vision model to get details. It uses the details from each frame and the transcript, if available, to describe what's happening in the video. 
 
-It's designed to run 100% locally, but allow support openrouter.
 
 ## Features
-- 💻 Runs completely locally - no cloud services or API keys needed
+- 💻 Can run completely locally - no cloud services or API keys needed
+- ☁️  Or, Leverage openrouter's LLM service for speed and scale
 - 🎬 Intelligent key frame extraction from videos
 - 🔊 High-quality audio transcription using OpenAI's Whisper
 - 👁️ Frame analysis using Ollama and Llama3.2 11B Vision Model
@@ -34,15 +34,16 @@ The system operates in three stages:
    - Uses first frame to set the scene
    - Creates comprehensive video description
 
-![Description of the image](docs/design.png)
+![Design](docs/design.png)
 
 ## Requirements
 
 ### System Requirements
 - Python 3.11 or higher
 - FFmpeg (required for audio processing)
-- At least 16GB RAM (32GB recommended)
-- GPU at least 12GB of VRAM or Apple M Series with at least 32GB
+- When running LLMs locally (not necessary when using openrouter)
+  - At least 16GB RAM (32GB recommended)
+  - GPU at least 12GB of VRAM or Apple M Series with at least 32GB
 
 ### Installation
 
