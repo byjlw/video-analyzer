@@ -13,6 +13,7 @@ class VideoAnalyzer:
         self.model = model
         self.prompt_loader = prompt_loader
         self._load_prompts()
+        self.previous_analyses = []
         
     def _load_prompts(self):
         """Load prompts from files."""
@@ -20,9 +21,30 @@ class VideoAnalyzer:
         self.video_prompt = self.prompt_loader.get_by_index(1)  # Second prompt
         self.narrative_prompt = self.prompt_loader.get_by_index(2)  # Third prompt
 
+    def _format_previous_analyses(self) -> str:
+        """Format previous frame analyses for inclusion in prompt."""
+        if not self.previous_analyses:
+            return ""
+            
+        formatted_analyses = []
+        for i, analysis in enumerate(self.previous_analyses):
+            formatted_analysis = (
+                f"Frame {i}\n"
+                f"{analysis.get('response', 'No analysis available')}\n"
+            )
+            formatted_analyses.append(formatted_analysis)
+            
+        return "\n".join(formatted_analyses)
+
     def analyze_frame(self, frame: Frame) -> Dict[str, Any]:
         """Analyze a single frame using the LLM."""
-        prompt = f"{self.frame_prompt}\nThis is frame {frame.number} captured at {frame.timestamp:.2f} seconds."
+        # Replace {PREVIOUS_FRAMES} token with formatted previous analyses
+        prompt_with_history = self.frame_prompt.replace(
+            "{PREVIOUS_FRAMES}", 
+            self._format_previous_analyses()
+        )
+        
+        prompt = f"{prompt_with_history}\nThis is frame {frame.number} captured at {frame.timestamp:.2f} seconds."
         
         try:
             response = self.client.generate(
@@ -32,10 +54,17 @@ class VideoAnalyzer:
                 num_predict=300
             )
             logger.info(f"Successfully analyzed frame {frame.number}")
-            return {k: v for k, v in response.items() if k != "context"}
+            
+            # Store the analysis for future frames
+            analysis_result = {k: v for k, v in response.items() if k != "context"}
+            self.previous_analyses.append(analysis_result)
+            
+            return analysis_result
         except Exception as e:
             logger.error(f"Error analyzing frame {frame.number}: {e}")
-            return {"response": f"Error analyzing frame {frame.number}: {str(e)}"}
+            error_result = {"response": f"Error analyzing frame {frame.number}: {str(e)}"}
+            self.previous_analyses.append(error_result)
+            return error_result
 
     def reconstruct_video(self, frame_analyses: List[Dict[str, Any]], frames: List[Frame], 
                          transcript: Optional[AudioTranscript] = None) -> Dict[str, Any]:
@@ -84,13 +113,24 @@ class VideoAnalyzer:
         """Transform the technical video description into an engaging narrative."""
         tech_desc = technical_description.get('response', '')
         
+        # Get the first frame analysis if available
+        first_frame_context = ""
+        if self.previous_analyses and len(self.previous_analyses) > 0:
+            first_frame = self.previous_analyses[0]
+            first_frame_context = (
+                f"\nFirst Frame Analysis:\n"
+                f"{first_frame.get('response', 'No analysis available')}\n"
+            )
+        
         # Include transcript context if available
         transcript_context = ""
         if transcript and transcript.text.strip():
             transcript_context = f"\n\nSpoken content context:\n{transcript.text}\n"
         
         prompt = (f"{self.narrative_prompt}\n\n"
-                 f"Here's the technical description to transform:\n\n"
+                 f"Here's the first frame analysis to set the scene:\n"
+                 f"{first_frame_context}\n"
+                 f"Here's the technical description to transform:\n"
                  f"{tech_desc}"
                  f"{transcript_context}")
         

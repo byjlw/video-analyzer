@@ -1,0 +1,91 @@
+Video Summary Instructions
+Available Materials
+
+Frame 1 of the video (viewable)
+Complete set of chronological frame descriptions from all previous viewers
+
+{FRAME_NOTES}
+
+
+Your Task
+You are synthesizing multiple frame descriptions into a cohesive video summary. You have access to the first frame and detailed notes about all subsequent frames.
+Step 1: Review Process
+
+First Frame Analysis
+
+Study your available frame in detail
+Note opening composition, characters, and setting
+Identify the initial tone and context
+
+
+Notes Review
+
+Read through all frame descriptions chronologically
+Mark key transitions and major developments
+Identify narrative patterns and themes
+Note any inconsistencies or gaps in descriptions
+
+
+
+Step 2: Synthesis Guidelines
+Create your summary following this structure:
+
+Opening Description
+
+Begin with what you can directly verify from your frame
+Establish the initial setting, characters, and situation
+
+
+Narrative Development
+
+Build the story chronologically
+Connect scenes and transitions naturally
+Maintain consistent character descriptions
+Track significant object movements and changes
+Include relevant audio elements mentioned in notes
+
+
+Technical Elements
+
+Note camera movements described
+Include editing transitions
+Reference significant visual effects
+Mention notable lighting or composition changes
+
+
+
+Writing Style Guidelines
+
+Write in present tense
+Use clear, active voice
+Maintain objective descriptions
+Avoid speculation beyond provided notes
+Include specific details that build credibility
+Connect scenes with smooth transitions
+Maintain consistent tone throughout
+
+Quality Check
+Before submitting, verify:
+
+The summary flows naturally
+No contradictions exist between sections
+All major elements from notes are included
+The narrative is coherent for someone who hasn't seen the video
+Technical terms are used correctly
+The opening matches your viewed frame
+Transitions between described frames feel natural
+
+Format Your Summary As:
+
+```
+IDEO SUMMARY
+Duration: [if provided in notes]
+
+[Opening paragraph - based on your viewed frame]
+
+[Main body - chronological progression from notes]
+
+[Closing observations - final state/resolution]
+
+Note: This summary is based on direct observation of the first frame combined with detailed notes from subsequent frames.
+```

@@ -1,0 +1,63 @@
+Frame Description Instructions
+Previous Notes Section
+[Previous frame descriptions will appear here in chronological order]
+
+{PREVIOUS_FRAMES}
+
+Your Task
+You are viewing Frame [X] of this video sequence. Your goal is to document what you observe in a way that contributes to a coherent narrative of the entire video.
+Step 1: Quick Scan
+
+Watch for key changes from the previous descriptions
+Note any new elements or developments
+Identify if this is a transition moment or continuation
+
+Step 2: Document Your Frame
+Follow this structure for your notes:
+
+Setting/Scene (if changed from previous)
+
+Only describe if there's a notable change from previous frames
+Include any new environmental details
+
+
+Action/Movement
+
+What is happening in this specific moment?
+Focus on motion and changes
+Note the direction of movement
+Describe gestures or expressions
+
+
+New Information
+
+Document any new objects, people, or text that appears
+Note any changes in audio described in previous frames
+Record any new dialogue or text shown
+
+
+Continuity Points
+
+Connect your observations to previous notes
+Highlight how this frame advances the narrative
+Note if something mentioned in previous frames is no longer visible
+
+
+
+Writing Guidelines
+
+Use present tense
+Be specific and concise
+Avoid interpretation - stick to what you can see
+Use clear transitional phrases to connect to previous descriptions
+Include timestamp if available
+
+Format Your Notes As:
+
+```
+Frame [X] If there are no existing frames you are Frame 0, otherwise you're the next frame
+[Your observations following the structure above]
+Key continuation points:
+- [List 2-3 elements that the next viewer should particularly watch for]
+
+```

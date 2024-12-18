@@ -2,12 +2,41 @@ import requests
 import json
 from typing import Optional, Dict, Any
 from .llm_client import LLMClient
+import logging
+
+logger = logging.getLogger(__name__)
 
 class OpenRouterClient(LLMClient):
     def __init__(self, api_key: str):
         self.api_key = api_key
         self.base_url = "https://openrouter.ai/api/v1"
         self.generate_url = f"{self.base_url}/chat/completions"
+
+    def _make_request(self,
+        data: Dict[str, Any],
+        headers: Dict[str, str]) -> requests.Response:
+        """Make request to OpenRouter API with rate limit handling."""
+        response = requests.post(self.generate_url, headers=headers, json=data)
+        
+        if response.status_code == 429:
+            error_data = response.json()
+            # Get detailed error message from provider if available
+            provider_message = ""
+            try:
+                if 'metadata' in error_data and 'raw' in error_data['metadata']:
+                    raw_error = json.loads(error_data['metadata']['raw'])
+                    if 'error' in raw_error and 'message' in raw_error['error']:
+                        provider_message = raw_error['error']['message']
+            except (json.JSONDecodeError, KeyError, TypeError):
+                pass
+            
+            error_message = provider_message or error_data.get('message', 'Rate limit exceeded')
+            logger.warning(f"Rate limit hit: {error_message}")
+            
+            # Return the error response to be handled by generate()
+            return response
+            
+        return response
 
     def generate(self,
         prompt: str,
@@ -54,7 +83,14 @@ class OpenRouterClient(LLMClient):
                 "Content-Type": "application/json"
             }
 
-            response = requests.post(self.generate_url, headers=headers, json=data)
+            response = self._make_request(data, headers)
+            
+            if response.status_code == 429:
+                # Return error response without retrying
+                error_data = response.json()
+                error_message = error_data.get('message', 'Rate limit exceeded')
+                return {"response": f"Rate limit error: {error_message}"}
+            
             response.raise_for_status()
 
             if stream:

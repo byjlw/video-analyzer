@@ -14,7 +14,7 @@
     "prompts": [
         {
             "name": "Frame Analysis",
-            "path": "frame_analysis.txt"
+            "path": "frame_analysis/frame_analysis.txt"
         },
         {
             "name": "Video Reconstruction",
