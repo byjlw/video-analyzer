@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 # Constants
 DEFAULT_MAX_RETRIES = 3
-DEFAULT_WAIT_TIME = 10  # seconds
+DEFAULT_WAIT_TIME = 25  # seconds
 MIN_WAIT_TIME = 1  # second
 RATE_LIMIT_BUFFER = 1.1  # 10% buffer on rate limit calculations
 
