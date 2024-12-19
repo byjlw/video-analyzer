@@ -2,7 +2,6 @@
 
 A video analysis tool that combines Llama's 11B vision model and Whisper to create a description by taking key frames, feeding them to the vision model to get details. It uses the details from each frame and the transcript, if available, to describe what's happening in the video. 
 
-
 ## Features
 - 💻 Can run completely locally - no cloud services or API keys needed
 - ☁️  Or, Leverage openrouter's LLM service for speed and scale
@@ -59,9 +58,11 @@ python3 -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
-3. Install dependencies:
+3. Install the package:
 ```bash
-pip install -r requirements.txt
+pip install .  # For regular installation
+# OR
+pip install -e .  # For development installation
 ```
 
 4. Install FFmpeg:
@@ -124,8 +125,8 @@ video-analyzer/
 │       ├── frame_analysis.txt
 │       └── describe.txt
 ├── output/             # Generated during runtime
-├── video_analyzer.py   # Main script
-└── requirements.txt
+├── video_analyzer/     # Package source code
+└── setup.py           # Package installation configuration
 ```
 
 ## Usage
@@ -134,12 +135,12 @@ video-analyzer/
 
 Using Ollama (default):
 ```bash
-python video_analyzer.py path/to/video.mp4
+video-analyzer path/to/video.mp4
 ```
 
 Using OpenRouter:
 ```bash
-python video_analyzer.py path/to/video.mp4 --openrouter-key your-api-key
+video-analyzer path/to/video.mp4 --openrouter-key your-api-key
 ```
 
 #### Sample Output
@@ -171,7 +172,7 @@ Note: The audio transcript indicates that "Happy Birthday to You!" is being sung
 ### Advanced Usage
 
 ```bash
-python video_analyzer.py path/to/video.mp4 \
+video-analyzer path/to/video.mp4 \
     --config custom_config.json \
     --output ./custom_output \
     --client openrouter \
@@ -205,8 +206,6 @@ The tool uses a cascading configuration system:
 1. Command line arguments (highest priority)
 2. User config (config/config.json)
 3. Default config [config/default_config.json](config/default_config.json)
-
-
 
 ### Configuration Options
 
@@ -303,6 +302,12 @@ The tool generates a JSON file (`analysis.json`) containing:
 }
 ```
 
+## Uninstallation
+
+To uninstall the package:
+```bash
+pip uninstall video-analyzer
+```
 
 ## License
 

@@ -1,9 +1,9 @@
 from typing import List, Dict, Any, Optional
 import logging
-from clients.llm_client import LLMClient
-from prompt import PromptLoader
-from frame import Frame
-from audio_processor import AudioTranscript
+from .clients.llm_client import LLMClient
+from .prompt import PromptLoader
+from .frame import Frame
+from .audio_processor import AudioTranscript
 
 logger = logging.getLogger(__name__)
 

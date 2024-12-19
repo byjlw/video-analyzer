@@ -3,14 +3,29 @@ from pathlib import Path
 import json
 from typing import Any
 import logging
+import pkg_resources
 
 logger = logging.getLogger(__name__)
 
 class Config:
     def __init__(self, config_dir: str = "config"):
+        # Handle user-provided config directory
         self.config_dir = Path(config_dir)
         self.user_config = self.config_dir / "config.json"
+        
+        # First try to find default_config.json in the user-provided directory
         self.default_config = self.config_dir / "default_config.json"
+        
+        # If not found, fallback to package's default config
+        if not self.default_config.exists():
+            try:
+                default_config_path = pkg_resources.resource_filename('video_analyzer', 'config/default_config.json')
+                self.default_config = Path(default_config_path)
+                logger.info(f"Using packaged default config from {self.default_config}")
+            except Exception as e:
+                logger.error(f"Error finding default config: {e}")
+                raise
+            
         self.load_config()
 
     def load_config(self):

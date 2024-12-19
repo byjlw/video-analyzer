@@ -1,0 +1,10 @@
+include requirements.txt
+include readme.md
+include LICENSE
+recursive-include config *
+recursive-include prompts *
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude *.so
+global-exclude .DS_Store
+global-exclude .git*

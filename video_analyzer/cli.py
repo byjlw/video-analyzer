@@ -8,13 +8,13 @@ from typing import Optional
 import torch
 import torch.backends.mps
 
-from config import Config, get_client, get_model
-from frame import VideoProcessor
-from prompt import PromptLoader
-from analyzer import VideoAnalyzer
-from audio_processor import AudioProcessor, AudioTranscript
-from clients.ollama import OllamaClient
-from clients.openrouter import OpenRouterClient
+from .config import Config, get_client, get_model
+from .frame import VideoProcessor
+from .prompt import PromptLoader
+from .analyzer import VideoAnalyzer
+from .audio_processor import AudioProcessor, AudioTranscript
+from .clients.ollama import OllamaClient
+from .clients.openrouter import OpenRouterClient
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
