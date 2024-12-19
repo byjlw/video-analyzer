@@ -52,7 +52,7 @@ class VideoAnalyzer:
                 model=self.model,
                 num_predict=300
             )
-            logger.info(f"Successfully analyzed frame {frame.number}")
+            logger.debug(f"Successfully analyzed frame {frame.number}")
             
             # Store the analysis for future frames
             analysis_result = {k: v for k, v in response.items() if k != "context"}

@@ -24,19 +24,19 @@ class AudioProcessor:
             
             # Log cache directory
             cache_dir = Path.home() / ".cache" / "huggingface" / "hub"
-            logger.info(f"Using HuggingFace cache directory: {cache_dir}")
+            logger.debug(f"Using HuggingFace cache directory: {cache_dir}")
             
             # Force CPU usage for now faster whisper having issues with cudas
             self.device = "cpu"
             compute_type = "float32"
-            logger.info(f"Using device: {self.device}")
+            logger.debug(f"Using device: {self.device}")
 
             self.model = WhisperModel(
                 model_size,
                 device=self.device,
                 compute_type=compute_type
             )
-            logger.info(f"Successfully loaded Whisper model: {model_size}")
+            logger.debug(f"Successfully loaded Whisper model: {model_size}")
             
             # Check for ffmpeg installation
             try:
@@ -67,7 +67,7 @@ class AudioProcessor:
                 str(audio_path)
             ], check=True, capture_output=True)
             
-            logger.info("Successfully extracted audio using ffmpeg")
+            logger.debug("Successfully extracted audio using ffmpeg")
             return audio_path
         except subprocess.CalledProcessError as e:
             logger.error(f"FFmpeg error: {e.stderr.decode()}")
@@ -77,7 +77,7 @@ class AudioProcessor:
                 video = AudioSegment.from_file(str(video_path))
                 audio = video.set_channels(1).set_frame_rate(16000)
                 audio.export(str(audio_path), format="wav")
-                logger.info("Successfully extracted audio using pydub")
+                logger.debug("Successfully extracted audio using pydub")
                 return audio_path
             except Exception as e2:
                 logger.error(f"Error extracting audio using pydub: {e2}")

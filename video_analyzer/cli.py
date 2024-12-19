@@ -16,9 +16,19 @@ from .audio_processor import AudioProcessor, AudioTranscript
 from .clients.ollama import OllamaClient
 from .clients.openrouter import OpenRouterClient
 
-# Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Initialize logger at module level
 logger = logging.getLogger(__name__)
+
+def get_log_level(level_str: str) -> int:
+    """Convert string log level to logging constant."""
+    levels = {
+        'DEBUG': logging.DEBUG,
+        'INFO': logging.INFO,
+        'WARNING': logging.WARNING,
+        'ERROR': logging.ERROR,
+        'CRITICAL': logging.CRITICAL
+    }
+    return levels.get(level_str.upper(), logging.INFO)
 
 def cleanup_files(output_dir: Path):
     """Clean up temporary files and directories."""
@@ -26,12 +36,12 @@ def cleanup_files(output_dir: Path):
         frames_dir = output_dir / "frames"
         if frames_dir.exists():
             shutil.rmtree(frames_dir)
-            logger.info(f"Cleaned up frames directory: {frames_dir}")
+            logger.debug(f"Cleaned up frames directory: {frames_dir}")
             
         audio_file = output_dir / "audio.wav"
         if audio_file.exists():
             audio_file.unlink()
-            logger.info(f"Cleaned up audio file: {audio_file}")
+            logger.debug(f"Cleaned up audio file: {audio_file}")
     except Exception as e:
         logger.error(f"Error during cleanup: {e}")
 
@@ -62,7 +72,21 @@ def main():
     parser.add_argument("--whisper-model", type=str, help="Whisper model size (tiny, base, small, medium, large)")
     parser.add_argument("--start-stage", type=int, default=1, help="Stage to start processing from (1-3)")
     parser.add_argument("--max-frames", type=int, default=sys.maxsize, help="Maximum number of frames to process")
+    parser.add_argument("--log-level", type=str, default="INFO", 
+                        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+                        help="Set the logging level (default: INFO)")
     args = parser.parse_args()
+
+    # Set up logging with specified level
+    log_level = get_log_level(args.log_level)
+    # Configure the root logger
+    logging.basicConfig(
+        level=log_level,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        force=True  # Force reconfiguration of the root logger
+    )
+    # Ensure our module logger has the correct level
+    logger.setLevel(log_level)
 
     # Load and update configuration
     config = Config(args.config)
@@ -84,7 +108,7 @@ def main():
         # Stage 1: Frame and Audio Processing
         if args.start_stage <= 1:
             # Initialize audio processor and extract transcript
-            logger.info("Initializing audio processing...")
+            logger.debug("Initializing audio processing...")
             audio_processor = AudioProcessor(model_size=config.get("audio", {}).get("whisper_model", "medium"))
             
             logger.info("Extracting audio from video...")

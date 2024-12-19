@@ -21,7 +21,7 @@ class Config:
             try:
                 default_config_path = pkg_resources.resource_filename('video_analyzer', 'config/default_config.json')
                 self.default_config = Path(default_config_path)
-                logger.info(f"Using packaged default config from {self.default_config}")
+                logger.debug(f"Using packaged default config from {self.default_config}")
             except Exception as e:
                 logger.error(f"Error finding default config: {e}")
                 raise
@@ -35,11 +35,11 @@ class Config:
         """
         try:
             if self.user_config.exists():
-                logger.info(f"Loading user config from {self.user_config}")
+                logger.debug(f"Loading user config from {self.user_config}")
                 with open(self.user_config) as f:
                     self.config = json.load(f)
             else:
-                logger.info(f"No user config found, loading default config from {self.default_config}")
+                logger.debug(f"No user config found, loading default config from {self.default_config}")
                 with open(self.default_config) as f:
                     self.config = json.load(f)
                     
@@ -81,7 +81,7 @@ class Config:
             self.config_dir.mkdir(parents=True, exist_ok=True)
             with open(self.user_config, 'w') as f:
                 json.dump(self.config, f, indent=2)
-            logger.info(f"Saved user config to {self.user_config}")
+            logger.debug(f"Saved user config to {self.user_config}")
         except Exception as e:
             logger.error(f"Error saving user config: {e}")
             raise

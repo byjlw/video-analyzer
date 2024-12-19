@@ -48,7 +48,7 @@ class PromptLoader:
             prompt = self.prompts[index]
             prompt_path = self._find_prompt_file(prompt["path"])
                 
-            logger.info(f"Loading prompt '{prompt['name']}' from {prompt_path}")
+            logger.debug(f"Loading prompt '{prompt['name']}' from {prompt_path}")
             with open(prompt_path) as f:
                 return f.read().strip()
         except Exception as e:
@@ -75,7 +75,7 @@ class PromptLoader:
             
             prompt_path = self._find_prompt_file(prompt["path"])
                 
-            logger.info(f"Loading prompt '{name}' from {prompt_path}")
+            logger.debug(f"Loading prompt '{name}' from {prompt_path}")
             with open(prompt_path) as f:
                 return f.read().strip()
         except Exception as e:

@@ -199,6 +199,7 @@ video-analyzer path/to/video.mp4 \
 | `--duration` | Duration in seconds to process | None (full video) |
 | `--whisper-model` | Whisper model size | medium |
 | `--keep-frames` | Keep extracted frames after analysis | False |
+| `--log-level` | Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) | INFO |
 
 ## Configuration
 
