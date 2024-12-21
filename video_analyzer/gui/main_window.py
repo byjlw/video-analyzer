@@ -82,6 +82,7 @@ class MainWindow(QMainWindow):
         
         # Create left panel for configuration
         self.config_panel = ConfigPanel()
+        self.config_panel.video_selected.connect(self.on_video_selected)
         main_layout.addWidget(self.config_panel, stretch=1)
         
         # Create right panel for video player and controls
@@ -108,6 +109,10 @@ class MainWindow(QMainWindow):
         self.progress.setAutoReset(True)
         self.progress.setCancelButton(None)
         self.progress.setMinimumDuration(0)
+
+    def on_video_selected(self, file_path):
+        """Handle video selection from config panel"""
+        self.video_player.set_video(file_path)
 
     def analyze_video(self):
         config = self.config_panel.get_config()
