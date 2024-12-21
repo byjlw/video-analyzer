@@ -57,37 +57,15 @@ def create_client(config: Config):
     else:
         raise ValueError(f"Unknown client type: {client_type}")
 
-def main():
-    parser = argparse.ArgumentParser(description="Analyze video using Vision models")
-    parser.add_argument("video_path", type=str, help="Path to the video file")
-    parser.add_argument("--config", type=str, default="config",
-                        help="Path to configuration directory")
-    parser.add_argument("--output", type=str, help="Output directory for analysis results")
-    parser.add_argument("--client", type=str, help="Client to use (ollama or openrouter)")
-    parser.add_argument("--ollama-url", type=str, help="URL for the Ollama service")
-    parser.add_argument("--openrouter-key", type=str, help="API key for OpenRouter service")
-    parser.add_argument("--model", type=str, help="Name of the vision model to use")
-    parser.add_argument("--duration", type=float, help="Duration in seconds to process")
-    parser.add_argument("--keep-frames", action="store_true", help="Keep extracted frames after analysis")
-    parser.add_argument("--whisper-model", type=str, help="Whisper model size (tiny, base, small, medium, large)")
-    parser.add_argument("--start-stage", type=int, default=1, help="Stage to start processing from (1-3)")
-    parser.add_argument("--max-frames", type=int, default=sys.maxsize, help="Maximum number of frames to process")
-    parser.add_argument("--log-level", type=str, default="INFO", 
-                        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-                        help="Set the logging level (default: INFO)")
-    parser.add_argument("--prompt", type=str, default="",
-                        help="Question to ask about the video")
-    args = parser.parse_args()
-
+def run_analysis(args):
+    """Run the actual video analysis"""
     # Set up logging with specified level
     log_level = get_log_level(args.log_level)
-    # Configure the root logger
     logging.basicConfig(
         level=log_level,
         format='%(asctime)s - %(levelname)s - %(message)s',
-        force=True  # Force reconfiguration of the root logger
+        force=True
     )
-    # Ensure our module logger has the correct level
     logger.setLevel(log_level)
 
     # Load and update configuration
@@ -131,7 +109,6 @@ def main():
                 frames_per_minute=config.get("frames", {}).get("per_minute", 60),
                 duration=config.get("duration")
             )
-            # Limit frames if max_frames specified
             frames = frames[:args.max_frames]
             
         # Stage 2: Frame Analysis
@@ -195,6 +172,41 @@ def main():
         if not config.get("keep_frames"):
             cleanup_files(output_dir)
         raise
+
+def main():
+    # Check for GUI mode first
+    if len(sys.argv) > 1 and sys.argv[1] == 'gui':
+        # Delay import of GUI components until needed
+        from .gui.main_window import MainWindow
+        from PyQt6.QtWidgets import QApplication
+        app = QApplication([])
+        window = MainWindow()
+        window.show()
+        return app.exec()
+
+    # Normal CLI mode
+    parser = argparse.ArgumentParser(description="Analyze video using Vision models")
+    parser.add_argument("video_path", type=str, help="Path to the video file")
+    parser.add_argument("--config", type=str, default="config",
+                        help="Path to configuration directory")
+    parser.add_argument("--output", type=str, help="Output directory for analysis results")
+    parser.add_argument("--client", type=str, help="Client to use (ollama or openrouter)")
+    parser.add_argument("--ollama-url", type=str, help="URL for the Ollama service")
+    parser.add_argument("--openrouter-key", type=str, help="API key for OpenRouter service")
+    parser.add_argument("--model", type=str, help="Name of the vision model to use")
+    parser.add_argument("--duration", type=float, help="Duration in seconds to process")
+    parser.add_argument("--keep-frames", action="store_true", help="Keep extracted frames after analysis")
+    parser.add_argument("--whisper-model", type=str, help="Whisper model size")
+    parser.add_argument("--start-stage", type=int, default=1, help="Stage to start processing from (1-3)")
+    parser.add_argument("--max-frames", type=int, default=sys.maxsize, help="Maximum number of frames to process")
+    parser.add_argument("--log-level", type=str, default="INFO", 
+                        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+                        help="Set the logging level")
+    parser.add_argument("--prompt", type=str, default="",
+                        help="Question to ask about the video")
+
+    args = parser.parse_args()
+    run_analysis(args)
 
 if __name__ == "__main__":
     main()
