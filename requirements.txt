@@ -1,6 +1,5 @@
-opencv-python>=4.8.0
-numpy>=1.24.0
-torch>=2.0.0
-openai-whisper>=20231117
-requests>=2.31.0
-Pillow>=10.0.0
+# Existing dependencies
+
+# GUI dependencies
+PyQt6>=6.4.0
+python-vlc>=3.0.20000
