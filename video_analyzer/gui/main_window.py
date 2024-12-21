@@ -1,11 +1,10 @@
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QPushButton, QFileDialog,
                              QMessageBox, QProgressDialog, QTextEdit, QSplitter)
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QProcess
 from .config_panel import ConfigPanel
 from .video_player import VideoPlayer
 from pathlib import Path
-import subprocess
 import sys
 import logging
 
@@ -21,80 +20,71 @@ class AnalysisWorker(QThread):
     def __init__(self, config):
         super().__init__()
         self.config = config
+        self.process = None
 
     def run(self):
         try:
             logger.debug("Starting analysis worker")
-            # Build command
-            cmd = [sys.executable, '-m', 'video_analyzer.cli']
+            # Build command arguments
+            args = ['-m', 'video_analyzer.cli']
             
             # Add all configuration options
-            cmd.extend([str(self.config['video_path'])])
+            args.append(str(self.config['video_path']))
             
             if self.config.get('output_dir'):
-                cmd.extend(['--output', str(self.config['output_dir'])])
+                args.extend(['--output', str(self.config['output_dir'])])
             if self.config.get('client'):
-                cmd.extend(['--client', self.config['client']])
+                args.extend(['--client', self.config['client']])
             if self.config.get('ollama_url'):
-                cmd.extend(['--ollama-url', self.config['ollama_url']])
+                args.extend(['--ollama-url', self.config['ollama_url']])
             if self.config.get('openrouter_key'):
-                cmd.extend(['--openrouter-key', self.config['openrouter_key']])
+                args.extend(['--openrouter-key', self.config['openrouter_key']])
             if self.config.get('model'):
-                cmd.extend(['--model', self.config['model']])
+                args.extend(['--model', self.config['model']])
             if self.config.get('duration'):
-                cmd.extend(['--duration', str(self.config['duration'])])
+                args.extend(['--duration', str(self.config['duration'])])
             if self.config.get('whisper_model'):
-                cmd.extend(['--whisper-model', self.config['whisper_model']])
+                args.extend(['--whisper-model', self.config['whisper_model']])
             if self.config.get('max_frames'):
-                cmd.extend(['--max-frames', str(self.config['max_frames'])])
+                args.extend(['--max-frames', str(self.config['max_frames'])])
             if self.config.get('keep_frames'):
-                cmd.extend(['--keep-frames'])
+                args.extend(['--keep-frames'])
             if self.config.get('prompt'):
-                cmd.extend(['--prompt', self.config['prompt']])
+                args.extend(['--prompt', self.config['prompt']])
 
-            logger.debug(f"Running command: {' '.join(cmd)}")
+            logger.debug(f"Running command: python {' '.join(args)}")
             
-            # Run the analysis
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                bufsize=1,
-                universal_newlines=True
-            )
-
-            logger.debug("Process started, monitoring output")
+            # Create QProcess
+            self.process = QProcess()
+            self.process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
             
-            # Monitor both stdout and stderr
-            while True:
-                # Check stdout
-                output = process.stdout.readline()
-                if output:
-                    logger.debug(f"STDOUT: {output.strip()}")
-                    self.output.emit(output.strip())
-
-                # Check stderr
-                error = process.stderr.readline()
-                if error:
-                    logger.debug(f"STDERR: {error.strip()}")
-                    self.progress.emit(error.strip())
-
-                # Check if process has finished
-                if output == '' and error == '' and process.poll() is not None:
-                    break
-
-            returncode = process.returncode
-            logger.debug(f"Process completed with return code: {returncode}")
+            # Connect process signals
+            self.process.readyReadStandardOutput.connect(self.handle_output)
+            self.process.finished.connect(self.handle_finished)
             
-            if returncode == 0:
-                self.finished.emit(True, "Analysis completed successfully!")
-            else:
-                self.finished.emit(False, f"Analysis failed with return code {returncode}")
+            # Start the process
+            self.process.start(sys.executable, args)
+            
+            # Wait for process to finish
+            self.process.waitForFinished(-1)  # Wait indefinitely
 
         except Exception as e:
             logger.exception("Error in analysis worker")
             self.finished.emit(False, str(e))
+    
+    def handle_output(self):
+        output = self.process.readAllStandardOutput().data().decode()
+        for line in output.splitlines():
+            if line:
+                self.output.emit(line)
+                if line.startswith("INFO") or line.startswith("WARNING") or line.startswith("ERROR"):
+                    self.progress.emit(line)
+    
+    def handle_finished(self, exit_code, exit_status):
+        if exit_code == 0 and exit_status == QProcess.ExitStatus.NormalExit:
+            self.finished.emit(True, "Analysis completed successfully!")
+        else:
+            self.finished.emit(False, f"Analysis failed with exit code {exit_code}")
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -148,12 +138,13 @@ class MainWindow(QMainWindow):
         splitter.setSizes([400, 600])
         
         # Initialize progress dialog
-        self.progress = QProgressDialog(self)
+        self.progress = QProgressDialog("Preparing analysis...", None, 0, 0, self)
         self.progress.setWindowModality(Qt.WindowModality.WindowModal)
         self.progress.setAutoClose(True)
         self.progress.setAutoReset(True)
         self.progress.setCancelButton(None)
-        self.progress.setMinimumDuration(0)
+        self.progress.setMinimumWidth(400)
+        self.progress.setStyleSheet("QProgressDialog { min-width: 400px; }")
 
         logger.debug("Main window initialized")
 
@@ -183,7 +174,6 @@ class MainWindow(QMainWindow):
 
         # Show progress dialog
         self.progress.setLabelText("Initializing analysis...")
-        self.progress.setRange(0, 0)  # Indeterminate progress
         self.progress.show()
 
         # Disable analyze button
