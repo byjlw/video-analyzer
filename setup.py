@@ -19,7 +19,6 @@ setup(
     entry_points={
         'console_scripts': [
             'video-analyzer=video_analyzer.cli:main',
-            'video-analyzer-gui=video_analyzer.gui:main',
         ],
     },
     classifiers=[
