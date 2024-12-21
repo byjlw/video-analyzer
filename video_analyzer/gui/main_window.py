@@ -5,8 +5,6 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from .config_panel import ConfigPanel
 from .video_player import VideoPlayer
 from pathlib import Path
-from ..config import Config
-from ..cli import create_client, get_model
 import subprocess
 import sys
 
