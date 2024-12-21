@@ -1,77 +1,143 @@
-# Video Analyzer Design Document
+# Video Analyzer Design
+![Design](design.png)
+## Core Workflow
 
-## Architecture
+1. Frame Extraction
+   - Uses OpenCV to extract frames from video
+   - Calculates frame differences to identify key moments
+   - Saves frames as JPEGs for LLM analysis
+   - Adaptive sampling based on video length and target frames per minute
 
-The Video Analyzer is built with a modular architecture that supports both command-line and graphical interfaces. The system is composed of the following main components:
+2. Audio Processing
+   - Extracts audio using FFmpeg
+   - Uses Whisper for transcription
+   - Handles poor quality audio by checking confidence scores
+   - Segments audio for better context in final analysis
 
-### Core Components
+3. Frame Analysis
+   - Each frame is analyzed independently using vision LLM
+   - Uses frame_analysis.txt prompt to guide LLM analysis
+   - Captures timestamp, visual elements, and actions
+   - Maintains chronological order for narrative flow
 
-- Frame Extractor: Handles video frame extraction
-- Audio Processor: Manages audio transcription
-- Vision Analyzer: Processes frames for object and face detection
-- Description Generator: Creates natural language descriptions
+4. Video Reconstruction
+   - Combines frame analyses chronologically
+   - Integrates audio transcript if available
+   - Uses video_reconstruction.txt prompt to create technical description
+   - Uses narrate_storyteller.txt to transform into engaging narrative
 
-### Interface Components
+## LLM Integration
 
-#### Command Line Interface (CLI)
-- Provides direct access to all analyzer features
-- Supports batch processing and automation
-- Configurable through command line arguments and config files
+### Base Client (llm_client.py)
+```python
+class LLMClient:
+    def encode_image(self, image_path: str) -> str:
+        # Common base64 encoding for all clients
+        with open(image_path, "rb") as image_file:
+            return base64.b64encode(image_file.read()).decode('utf-8')
 
-#### Graphical User Interface (GUI)
-- Built using PyQt6 for cross-platform compatibility
-- Components:
-  - MainWindow: Primary application window and layout manager
-  - ConfigPanel: User interface for all configuration options
-  - VideoPlayer: Integrated video playback using python-vlc
-  - Settings: Persistent storage of user preferences
+    @abstractmethod
+    def generate(self,
+        prompt: str,
+        image_path: Optional[str] = None,
+        stream: bool = False,
+        model: str = "llama3.2-vision",
+        temperature: float = 0.2,
+        num_predict: int = 256) -> Dict[Any, Any]:
+        pass
+```
 
-## Configuration Management
+### Client Implementations
 
-The system follows a hierarchical configuration approach:
+1. Ollama (ollama.py)
+   - Uses local Ollama API
+   - Sends images as base64 in "images" array
+   - Returns raw response from Ollama
 
-1. Command Line Arguments (highest priority)
-2. GUI Settings (if in GUI mode)
-3. User Config File (~/.video-analyzer/config.json)
-4. Default Configuration
+2. OpenRouter (openrouter.py)
+   - Uses OpenRouter's chat completions API
+   - Sends images as content array with type "image_url"
+   - Requires specific headers and API key
+   - Returns standardized response format
 
-GUI-specific settings are stored separately in ~/.video-analyzer/gui_settings.json
+## Configuration System
 
-## Data Flow
+Uses cascade priority:
+1. Command line args
+2. User config (config.json)
+3. Default config (default_config.json)
 
-1. Video Input
-   - CLI: Direct file path input
-   - GUI: File selection dialog
+Key configuration groups:
+```json
+{
+    "clients": {
+        "default": "ollama",
+        "ollama": {
+            "url": "http://localhost:11434",
+            "model": "llama3.2-vision"
+        },
+        "openrouter": {
+            "api_key": "",
+            "model": "meta-llama/llama-3.2-11b-vision-instruct:free"
+        }
+    },
+    "frames": {
+        "per_minute": 60,
+        "analysis_threshold": 10.0,
+        "min_difference": 5.0,
+        "max_count": 30
+    }
+}
+```
 
-2. Configuration
-   - CLI: Command line args -> Config file -> Defaults
-   - GUI: User Interface -> Saved Settings -> Defaults
+## Prompt System
 
-3. Processing Pipeline
-   - Frame Extraction
-   - Audio Transcription
-   - Vision Analysis
-   - Description Generation
+Two key prompts:
 
-4. Output Handling
-   - CLI: Console output and file generation
-   - GUI: Interactive display and file saving
+1. frame_analysis.txt
+   - Analyzes single frame
+   - Includes timestamp context
+   - Focuses on visual elements and actions
+   - Supports user questions through {prompt} token
 
-## Dependencies
+2. describe.txt
+   - Combines frame analyses
+   - Uses 1 frame
+   - Integrates transcript
+   - Creates a description of the video based on all the past frames
+   - Supports user questions through {prompt} token
 
-Core Dependencies:
-- OpenCV: Video processing
-- PyTorch: Machine learning models
-- Transformers: NLP processing
+Both prompts support user questions via the --prompt flag. When a question is provided, it is prefixed with "I want to know" and injected into the prompts using the {prompt} token. This allows users to ask specific questions about the video that guide both the frame analysis and final description.
 
-GUI Dependencies:
-- PyQt6: GUI framework
-- python-vlc: Video playback
+## Sample output
+[Sample Output](sample_analysis.json)
 
-## Future Considerations
+## Common Issues & Solutions
 
-- Real-time analysis mode
-- Plugin system for custom analyzers
-- Network-based processing
-- Multi-language support
-- Batch processing in GUI mode
+1. Frame Analysis Failures
+   - Ollama: Check if service is running and model is loaded
+   - OpenRouter: Verify API key and check response format
+   - Both: Ensure image encoding is correct for each API
+
+2. Memory Usage
+   - Adjust frames_per_minute based on video length
+   - Clean up frames after analysis
+   - Use appropriate Whisper model size
+
+3. Poor Analysis Quality
+   - Check frame extraction threshold
+   - Verify prompt templates
+   - Ensure correct model is being used
+
+## Adding New Features
+
+1. New LLM Provider
+   - Inherit from LLMClient
+   - Implement correct image format for API
+   - Add client config to default_config.json
+   - Update create_client() in video_analyzer.py
+
+2. Custom Analysis
+   - Add new prompt template
+   - Update VideoAnalyzer methods
+   - Modify output format in results
