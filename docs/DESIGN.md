@@ -92,22 +92,21 @@ Key configuration groups:
 
 ## Prompt System
 
-Three key prompts:
+Two key prompts:
 
 1. frame_analysis.txt
    - Analyzes single frame
    - Includes timestamp context
    - Focuses on visual elements and actions
 
-2. video_reconstruction.txt
+2. describe.txt
    - Combines frame analyses
+   - uses 1 frame
    - Integrates transcript
-   - Creates chronological description
+   - Creates a description of the video based on all the past frames
 
-3. narrate_storyteller.txt
-   - Transforms technical description
-   - Makes narrative more engaging
-   - Maintains factual accuracy
+## Sample output
+[Sample Output](sample_analysis.json)
 
 ## Common Issues & Solutions
 

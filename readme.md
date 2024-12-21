@@ -145,28 +145,7 @@ video-analyzer path/to/video.mp4 --openrouter-key your-api-key
 
 #### Sample Output
 ```
-Transcript:
- Happy birthday to you!
-
-Enhanced Video Narrative:
-Here are the descriptions of what's happening in each frame:
-
-**Frame 1 (2.50s)**
-A woman enters a bedroom with a tray of breakfast items. She is wearing a white robe and holding a wooden tray, accompanied by a young girl with blonde hair who is smiling.
-
-**To Frame 2 (4.50s)**
-The woman moves to the right side of the image, still holding the tray of food and drinks. The young girl looks up at something outside the frame, while two other young girls with blue hoodies stand behind the woman, all smiling.
-
-**To Frame 3 (5.00s)**
-The woman holds the tray of food and drinks in front of the camera, with the two young girls with blue hoodies standing behind her. The food and drinks on the tray are assorted colors.
-
-**To Frame 4 (5.50s)**
-The woman moves slightly to the right and now holds the tray in front of a bunk bed. A blue curtain is visible behind the bunk bed, and she is wearing a white jacket.
-
-**To Frame 5 (6.00s)**
-The woman holds the tray in the center of the image, with a bed with a pink pillow visible against the wall to her right. She is now wearing a white shirt.
-
-Note: The audio transcript indicates that "Happy Birthday to You!" is being sung, suggesting that this scene is taking place during a birthday celebration.
+Video Summary**\n\nDuration: 5 minutes and 67 seconds\n\nThe video begins with a person with long blonde hair, wearing a pink t-shirt and yellow shorts, standing in front of a black plastic tub or container on wheels. The ground appears to be covered in wood chips.\n\nAs the video progresses, the person remains facing away from the camera, looking down at something inside the tub. Their left hand is resting on their hip, while their right arm hangs loosely by their side. There are no new objects or people visible in this frame, but there appears to be some greenery and possibly fruit scattered around the ground behind the person.\n\nThe black plastic tub on wheels is present throughout the video, and the wood chips covering the ground remain consistent with those seen in Frame 0. The person's pink t-shirt matches the color of the shirt worn by the person in Frame 0.\n\nAs the video continues, the person remains stationary, looking down at something inside the tub. There are no significant changes or developments in this frame.\n\nThe key continuation point is to watch for the person to pick up an object from the tub and examine it more closely.\n\n**Key Continuation Points:**\n\n*   The person's pink t-shirt matches the color of the shirt worn by the person in Frame 0.\n*   The black plastic tub on wheels is also present in Frame 0.\n*   The wood chips covering the ground are consistent with those seen in Frame 0.
 ```
 
 ### Advanced Usage
@@ -249,59 +228,6 @@ The tool generates a JSON file (`analysis.json`) containing:
 
 ### Example Output Structure
 
-```json
-{
-  "metadata": {
-    "client": "openrouter",
-    "model": "meta-llama/llama-3.2-11b-vision-instruct:free",
-    "whisper_model": "medium",
-    "frames_per_minute": 60,
-    "duration_processed": null,
-    "frames_extracted": 8,
-    "frames_processed": 8,
-    "start_stage": 1,
-    "audio_language": "en",
-    "transcription_successful": true
-  },
-  "transcript": {
-    "text": " I've ever tasted. Good, I'm so happy. I'm glad we did the hot cocoa bombs. It's the  sugary-est though. I'm so glad we got her the hot cocoa.",
-    "segments": [
-      {
-        "text": " I've ever tasted. Good, I'm so happy. I'm glad we did the hot cocoa bombs. It's the",
-        "start": 0.0,
-        "end": 6.32,
-        "words": [
-          {
-            "word": " I've",
-            "start": 0.0,
-            "end": 0.26,
-            "probability": 0.22717513144016266
-          },
-          ...
-          {
-            "word": " the",
-            "start": 6.12,
-            "end": 6.32,
-            "probability": 0.34964463114738464
-          }
-        ]
-      }
-    ]
-  },
-  "frame_analyses": [
-    {
-      "response": "Frame 0\nThe scene is set in a snowy environment, with a person wearing a light blue hoodie and black pants standing in front of a building. The person is facing away from the camera, and their head is covered with a black and white patterned hat.\n\nAction/Movement\nThe person is standing still, with their arms at their sides. There is no visible movement or action in this frame.\n\nNew Information\nThere are no new objects, people, or text visible in this frame. The background is blurry, but it appears to be a building with windows and a door.\n\nContinuity Points\nThis frame does not provide any continuity points to previous frames, as it is the first frame in the sequence.\n\nKey Continuation Points:\n- The person's clothing and accessories, such as the hat and hoodie, may be important to note for future frames.\n- The building in the background may be a significant location in the narrative.\n- The snowy environment may be a recurring theme throughout the video."
-    },
-    ...
-    {
-      "response": "Frame 7 (8.00 seconds)\nSetting/Scene: The snowy environment remains the same, with the building in the background still blurry.\n\nAction/Movement: The person is now walking towards the camera, their pace slightly faster than before. They are looking directly at the camera, and their facial expression appears neutral.\n\nNew Information: There are no new objects, people, or text visible in this frame. The audio remains the same as previous frames.\n\nContinuity Points: The person's clothing and accessories, as well as the building in the background, are consistent with previous frames. The snowy environment continues to be a significant part of the scene.\n\nKey Continuation Points:\n- The direction of the person's movement may indicate a destination or a goal.\n- The person's facial expression and body language may change as they approach the camera.\n- The steady pace of the person's movement may suggest a sense of purpose or urgency."
-    }
-  ],
-  "video_description": {
-    "response": "Here is a synthesized video summary based on the provided frame descriptions:\n\n**VIDEO SUMMARY**\n\nDuration: 8 seconds\n\n**Opening Description**\n\nThe video begins with a person standing in a snowy environment, wearing a light blue hoodie and black pants, with a black and white patterned hat covering their head. They are facing away from the camera, with their arms at their sides, and standing in front of a blurry building with windows and a door. The initial tone and context suggest a serene and peaceful atmosphere.\n\n**Narrative Development**\n\nAs the person turns to face the camera in Frame 1, their gaze is directed towards the camera, and their body is slightly turned to the right. This subtle movement sets the stage for their deliberate and purposeful actions throughout the video. In subsequent frames, the person walks towards the camera, their pace steady and purposeful, with their arms still at their sides. Their facial expression remains neutral, but their gaze is fixed on the camera, suggesting a sense of focus or interest. The direction of their movement may indicate a destination or goal, and the steady pace of their movement suggests a sense of purpose or urgency.\n\n**Technical Elements**\n\nThe camera appears to be stationary, with no notable movements described. The editing transitions are not explicitly mentioned, but the seamless progression from one frame to the next suggests a smooth and natural cut. The visual effects are minimal, with no notable changes in lighting or composition.\n\n**Closing Observations**\n\nThe video concludes with the person walking towards the camera, their pace slightly faster than before, and their gaze fixed on the camera. The final state of the scene is one of purposeful movement, with the person seemingly focused on a specific destination or goal. The narrative is coherent and engaging, with a clear progression from the initial setting to the final state.\n\nNote: This summary is based on direct observation of the first frame combined with detailed notes from subsequent frames."
-  }
-}
-```
 
 ## Uninstallation
 

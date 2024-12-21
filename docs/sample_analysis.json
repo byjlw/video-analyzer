@@ -1,0 +1,118 @@
+{
+  "metadata": {
+    "client": "ollama",
+    "model": "llama3.2-vision",
+    "whisper_model": "medium",
+    "frames_per_minute": 60,
+    "duration_processed": null,
+    "frames_extracted": 5,
+    "frames_processed": 5,
+    "start_stage": 1,
+    "audio_language": "en",
+    "transcription_successful": true
+  },
+  "transcript": {
+    "text": " I'm scared!",
+    "segments": [
+      {
+        "text": " I'm scared!",
+        "start": 1.78,
+        "end": 2.24,
+        "words": [
+          {
+            "word": " I'm",
+            "start": 1.78,
+            "end": 2.04,
+            "probability": 0.4382356107234955
+          },
+          {
+            "word": " scared!",
+            "start": 2.04,
+            "end": 2.24,
+            "probability": 0.9464112520217896
+          }
+        ]
+      }
+    ]
+  },
+  "frame_analyses": [
+    {
+      "model": "llama3.2-vision",
+      "created_at": "2024-12-18T23:14:35.871404545Z",
+      "response": "Frame 0\n\nSetting/Scene: A person with long blonde hair, wearing a pink t-shirt and yellow shorts, stands in front of a black plastic tub or container on wheels. The ground appears to be covered in wood chips.\n\nAction/Movement: The person is facing away from the camera, looking down at something inside the tub. Their left hand is resting on their hip, while their right arm hangs loosely by their side.\n\nNew Information: There are no new objects or people visible in this frame. However, there appears to be some greenery and possibly fruit scattered around the ground behind the person.\n\nContinuity Points:\n\n* The person's pink t-shirt matches the color of the shirt worn by the person in the background of Frame 1.\n* The black plastic tub on wheels is also present in Frame 1.\n* The wood chips covering the ground are consistent with those seen in Frame 1.\n\nKey Continuation Point: Watch for the person to pick up an object from the tub and examine it more closely.",
+      "done": true,
+      "done_reason": "stop",
+      "total_duration": 7952576674,
+      "load_duration": 2623794964,
+      "prompt_eval_count": 349,
+      "prompt_eval_duration": 1787000000,
+      "eval_count": 207,
+      "eval_duration": 3317000000
+    },
+    {
+      "model": "llama3.2-vision",
+      "created_at": "2024-12-18T23:14:41.664468523Z",
+      "response": "Frame 1\n\nSetting/Scene: A person with long blonde hair, wearing a pink t-shirt and yellow shorts, stands in front of a black plastic tub or container on wheels. The ground appears to be covered in wood chips.\n\nAction/Movement: The person is facing away from the camera, looking down at something inside the tub. Their left hand is resting on their hip, while their right arm hangs loosely by their side.\n\nNew Information: There are no new objects or people visible in this frame. However, there appears to be some greenery and possibly fruit scattered around the ground behind the person.\n\nContinuity Points:\n\n* The person's pink t-shirt matches the color of the shirt worn by the person in Frame 0.\n* The black plastic tub on wheels is also present in Frame 0.\n* The wood chips covering the ground are consistent with those seen in Frame 0.\n\nKey Continuation Point: Watch for the person to pick up an object from the tub and examine it more closely.",
+      "done": true,
+      "done_reason": "stop",
+      "total_duration": 5451905730,
+      "load_duration": 15567833,
+      "prompt_eval_count": 559,
+      "prompt_eval_duration": 1810000000,
+      "eval_count": 204,
+      "eval_duration": 3408000000
+    },
+    {
+      "model": "llama3.2-vision",
+      "created_at": "2024-12-18T23:14:47.516490633Z",
+      "response": "**Frame 2**\n\n*   **Setting/Scene**: The person with long blonde hair, wearing a pink t-shirt and yellow shorts, stands in front of a black plastic tub or container on wheels. The ground appears to be covered in wood chips.\n*   **Action/Movement**: The person is facing away from the camera, looking down at something inside the tub. Their left hand is resting on their hip, while their right arm hangs loosely by their side.\n*   **New Information**: There are no new objects or people visible in this frame. However, there appears to be some greenery and possibly fruit scattered around the ground behind the person.\n*   **Continuity Points**:\n    *   The person's pink t-shirt matches the color of the shirt worn by the person in Frame 0.\n    *   The black plastic tub on wheels is also present in Frame 0.\n    *   The wood chips covering the ground are consistent with those seen in Frame 0.\n*   **Key Continuation Point**: Watch for the person to pick up an object from the tub and examine it more closely.",
+      "done": true,
+      "done_reason": "stop",
+      "total_duration": 5848181203,
+      "load_duration": 14482916,
+      "prompt_eval_count": 766,
+      "prompt_eval_duration": 1798000000,
+      "eval_count": 227,
+      "eval_duration": 3823000000
+    },
+    {
+      "model": "llama3.2-vision",
+      "created_at": "2024-12-18T23:14:54.869592761Z",
+      "response": "**Frame Description**\n\n* **Setting/Scene**: The person with long blonde hair, wearing a pink t-shirt and yellow shorts, stands in front of a black plastic tub or container on wheels. The ground appears to be covered in wood chips.\n* **Action/Movement**: The person is facing away from the camera, looking down at something inside the tub. Their left hand is resting on their hip, while their right arm hangs loosely by their side.\n* **New Information**: There are no new objects or people visible in this frame. However, there appears to be some greenery and possibly fruit scattered around the ground behind the person.\n* **Continuity Points**:\n\t+ The person's pink t-shirt matches the color of the shirt worn by the person in Frame 0.\n\t+ The black plastic tub on wheels is also present in Frame 0.\n\t+ The wood chips covering the ground are consistent with those seen in Frame 0.\n* **Key Continuation Point**: Watch for the person to pick up an object from the tub and examine it more closely.\n\n**Writing Guidelines**\n\n* Use present tense\n* Be specific and concise\n* Avoid interpretation - stick to what you can see\n* Use clear transitional phrases to connect to previous descriptions\n* Include timestamp if available\n\n**Format Your Notes As**\n\n```\nFrame 3 (5.10 seconds)\n[Your observations following the structure above]\nKey continuation points:\n- [List 2-3 elements that the next viewer",
+      "done": true,
+      "done_reason": "length",
+      "total_duration": 7348923526,
+      "load_duration": 14771659,
+      "prompt_eval_count": 996,
+      "prompt_eval_duration": 1915000000,
+      "eval_count": 301,
+      "eval_duration": 5193000000
+    },
+    {
+      "model": "llama3.2-vision",
+      "created_at": "2024-12-18T23:15:02.285939575Z",
+      "response": "**Frame Description**\n\n* **Setting/Scene**: The person with long blonde hair, wearing a pink t-shirt and yellow shorts, stands in front of a black plastic tub or container on wheels. The ground appears to be covered in wood chips.\n* **Action/Movement**: The person is facing away from the camera, looking down at something inside the tub. Their left hand is resting on their hip, while their right arm hangs loosely by their side.\n* **New Information**: There are no new objects or people visible in this frame. However, there appears to be some greenery and possibly fruit scattered around the ground behind the person.\n* **Continuity Points**:\n\t+ The person's pink t-shirt matches the color of the shirt worn by the person in Frame 0.\n\t+ The black plastic tub on wheels is also present in Frame 0.\n\t+ The wood chips covering the ground are consistent with those seen in Frame 0.\n* **Key Continuation Point**: Watch for the person to pick up an object from the tub and examine it more closely.\n\n**Writing Guidelines**\n\n* Use present tense\n* Be specific and concise\n* Avoid interpretation - stick to what you can see\n* Use clear transitional phrases to connect to previous descriptions\n* Include timestamp if available\n\n**Format Your Notes As**\n\n```\nFrame 4 (5.67 seconds)\n[Your observations following the structure above]\nKey continuation points:\n- [List 2-3 elements that the next viewer",
+      "done": true,
+      "done_reason": "length",
+      "total_duration": 7412131422,
+      "load_duration": 14780998,
+      "prompt_eval_count": 1302,
+      "prompt_eval_duration": 2047000000,
+      "eval_count": 301,
+      "eval_duration": 5137000000
+    }
+  ],
+  "video_description": {
+    "model": "llama3.2-vision",
+    "created_at": "2024-12-18T23:15:06.166299111Z",
+    "response": "**Video Summary**\n\nDuration: 5 minutes and 67 seconds\n\nThe video begins with a person with long blonde hair, wearing a pink t-shirt and yellow shorts, standing in front of a black plastic tub or container on wheels. The ground appears to be covered in wood chips.\n\nAs the video progresses, the person remains facing away from the camera, looking down at something inside the tub. Their left hand is resting on their hip, while their right arm hangs loosely by their side. There are no new objects or people visible in this frame, but there appears to be some greenery and possibly fruit scattered around the ground behind the person.\n\nThe black plastic tub on wheels is present throughout the video, and the wood chips covering the ground remain consistent with those seen in Frame 0. The person's pink t-shirt matches the color of the shirt worn by the person in Frame 0.\n\nAs the video continues, the person remains stationary, looking down at something inside the tub. There are no significant changes or developments in this frame.\n\nThe key continuation point is to watch for the person to pick up an object from the tub and examine it more closely.\n\n**Key Continuation Points:**\n\n*   The person's pink t-shirt matches the color of the shirt worn by the person in Frame 0.\n*   The black plastic tub on wheels is also present in Frame 0.\n*   The wood chips covering the ground are consistent with those seen in Frame 0.",
+    "done": true,
+    "done_reason": "stop",
+    "total_duration": 3877694027,
+    "load_duration": 10604604,
+    "prompt_eval_count": 1705,
+    "prompt_eval_duration": 558000000,
+    "eval_count": 297,
+    "eval_duration": 3308000000
+  }
+}
