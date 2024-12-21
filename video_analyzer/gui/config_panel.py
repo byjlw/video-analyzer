@@ -2,10 +2,12 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QFormLayout,
                              QLineEdit, QSpinBox, QDoubleSpinBox, 
                              QCheckBox, QPushButton, QFileDialog, QGroupBox,
                              QComboBox)
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from .settings import Settings
 
 class ConfigPanel(QWidget):
+    video_selected = pyqtSignal(str)  # Signal emitted when a video is selected
+    
     def __init__(self):
         super().__init__()
         self.settings = Settings()
@@ -104,8 +106,7 @@ class ConfigPanel(QWidget):
         )
         if file_name:
             self.video_path.setText(file_name)
-            # Also set video in player
-            self.parent().video_player.set_video(file_name)
+            self.video_selected.emit(file_name)  # Emit signal when video is selected
 
     def browse_output(self):
         dir_name = QFileDialog.getExistingDirectory(
