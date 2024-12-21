@@ -1,14 +1,31 @@
-import vlc
+import os
+import sys
+import platform
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSlider
 from PyQt6.QtCore import Qt, QTimer
+
+# Set up VLC environment variables for different platforms
+if platform.system() == 'Darwin':  # macOS
+    os.environ['VLC_PLUGIN_PATH'] = '/Applications/VLC.app/Contents/MacOS/plugins'
+    os.environ['PATH'] = os.environ['PATH'] + ':/Applications/VLC.app/Contents/MacOS'
+
+import vlc
 
 class VideoPlayer(QWidget):
     def __init__(self):
         super().__init__()
         
-        # Create VLC instance and media player
-        self.instance = vlc.Instance()
-        self.player = self.instance.media_player_new()
+        try:
+            # Create VLC instance and media player
+            self.instance = vlc.Instance()
+            self.player = self.instance.media_player_new()
+        except Exception as e:
+            print(f"Error initializing VLC: {e}")
+            print("Please ensure VLC is installed:")
+            print("MacOS: brew install vlc")
+            print("Ubuntu/Debian: sudo apt-get install vlc")
+            print("Windows: choco install vlc")
+            sys.exit(1)
         
         # Create video widget
         layout = QVBoxLayout(self)
