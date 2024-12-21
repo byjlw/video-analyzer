@@ -1,33 +1,36 @@
 import os
 import sys
-import platform
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSlider
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSlider, QLabel
 from PyQt6.QtCore import Qt, QTimer
 
-# Set up VLC environment variables for different platforms
-if platform.system() == 'Darwin':  # macOS
-    os.environ['VLC_PLUGIN_PATH'] = '/Applications/VLC.app/Contents/MacOS/plugins'
-    os.environ['PATH'] = os.environ['PATH'] + ':/Applications/VLC.app/Contents/MacOS'
-
-import vlc
+try:
+    import mpv
+except ImportError:
+    print("Please install MPV first:")
+    print("MacOS: brew install mpv")
+    print("Ubuntu/Debian: sudo apt-get install mpv")
+    print("Windows: choco install mpv")
+    sys.exit(1)
 
 class VideoPlayer(QWidget):
     def __init__(self):
         super().__init__()
         
         try:
-            # Create VLC instance and media player
-            self.instance = vlc.Instance()
-            self.player = self.instance.media_player_new()
+            # Create MPV player
+            self.player = mpv.MPV(wid=str(int(self.winId())))
+            # Configure player
+            self.player.loop = False
+            self.player.keep_open = True
         except Exception as e:
-            print(f"Error initializing VLC: {e}")
-            print("Please ensure VLC is installed:")
-            print("MacOS: brew install vlc")
-            print("Ubuntu/Debian: sudo apt-get install vlc")
-            print("Windows: choco install vlc")
+            print(f"Error initializing MPV: {e}")
+            print("Please ensure MPV is installed:")
+            print("MacOS: brew install mpv")
+            print("Ubuntu/Debian: sudo apt-get install mpv")
+            print("Windows: choco install mpv")
             sys.exit(1)
         
-        # Create video widget
+        # Create video widget layout
         layout = QVBoxLayout(self)
         
         # Create video frame
@@ -43,8 +46,12 @@ class VideoPlayer(QWidget):
         controls_layout.addWidget(self.play_button)
         
         self.position_slider = QSlider(Qt.Orientation.Horizontal)
+        self.position_slider.setRange(0, 1000)
         self.position_slider.sliderMoved.connect(self.set_position)
         controls_layout.addWidget(self.position_slider)
+        
+        self.time_label = QLabel("00:00 / 00:00")
+        controls_layout.addWidget(self.time_label)
         
         layout.addLayout(controls_layout)
         
@@ -54,41 +61,60 @@ class VideoPlayer(QWidget):
         self.update_timer.start(100)
         
         self.is_playing = False
+        self.duration = 0
 
     def set_video(self, video_path):
         if not video_path:
             return
-            
-        # Set the video media
-        media = self.instance.media_new(video_path)
-        self.player.set_media(media)
         
-        # Set the video widget as the rendering surface
-        if hasattr(self.player, 'set_hwnd'):  # Windows
-            self.player.set_hwnd(int(self.video_frame.winId()))
-        elif hasattr(self.player, 'set_nsobject'):  # macOS
-            self.player.set_nsobject(int(self.video_frame.winId()))
-        else:  # Linux
-            self.player.set_xwindow(int(self.video_frame.winId()))
+        try:
+            self.player.play(str(video_path))
+            self.player.pause = True
+            self.is_playing = False
+            self.play_button.setText("Play")
+            
+            # Wait for duration to be available
+            while self.player.duration is None:
+                pass
+            self.duration = self.player.duration
+        except Exception as e:
+            print(f"Error loading video: {e}")
 
     def toggle_play(self):
         if self.is_playing:
-            self.player.pause()
+            self.player.pause = True
             self.play_button.setText("Play")
         else:
-            self.player.play()
+            self.player.pause = False
             self.play_button.setText("Pause")
         self.is_playing = not self.is_playing
 
     def set_position(self, position):
-        self.player.set_position(position / 1000.0)
+        if self.duration > 0:
+            self.player.seek(self.duration * (position / 1000.0), reference="absolute")
+
+    def format_time(self, seconds):
+        m, s = divmod(int(seconds), 60)
+        h, m = divmod(m, 60)
+        if h > 0:
+            return f"{h:02d}:{m:02d}:{s:02d}"
+        return f"{m:02d}:{s:02d}"
 
     def update_ui(self):
-        # Update slider position
-        media_pos = int(self.player.get_position() * 1000)
-        self.position_slider.setValue(media_pos)
-        
-        # Update button text if playback ends
-        if not self.player.is_playing() and self.is_playing:
-            self.is_playing = False
-            self.play_button.setText("Play")
+        if hasattr(self.player, 'time_pos') and self.player.time_pos is not None:
+            # Update slider position
+            pos = int((self.player.time_pos / self.duration) * 1000) if self.duration > 0 else 0
+            self.position_slider.setValue(pos)
+            
+            # Update time label
+            current = self.format_time(self.player.time_pos)
+            total = self.format_time(self.duration)
+            self.time_label.setText(f"{current} / {total}")
+            
+            # Update play state
+            if not self.player.pause and not self.is_playing:
+                self.is_playing = True
+                self.play_button.setText("Pause")
+            elif self.player.pause and self.is_playing:
+                self.is_playing = False
+                self.play_button.setText("Play")
