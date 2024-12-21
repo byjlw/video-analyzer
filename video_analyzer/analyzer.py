@@ -8,12 +8,28 @@ from .audio_processor import AudioTranscript
 logger = logging.getLogger(__name__)
 
 class VideoAnalyzer:
-    def __init__(self, client: LLMClient, model: str, prompt_loader: PromptLoader):
+    def __init__(self, client: LLMClient, model: str, prompt_loader: PromptLoader, user_prompt: str = ""):
+        """Initialize the VideoAnalyzer.
+        
+        Args:
+            client: LLM client for making API calls
+            model: Name of the model to use
+            prompt_loader: Loader for prompt templates
+            user_prompt: Optional user question about the video that will be injected into frame analysis
+                        and video description prompts using the {prompt} token
+        """
         self.client = client
         self.model = model
         self.prompt_loader = prompt_loader
+        self.user_prompt = user_prompt  # Store user's question about the video
         self._load_prompts()
         self.previous_analyses = []
+        
+    def _format_user_prompt(self) -> str:
+        """Format the user's prompt by adding prefix if not empty."""
+        if self.user_prompt:
+            return f"I want to know {self.user_prompt}"
+        return ""
         
     def _load_prompts(self):
         """Load prompts from files."""
@@ -38,12 +54,10 @@ class VideoAnalyzer:
     def analyze_frame(self, frame: Frame) -> Dict[str, Any]:
         """Analyze a single frame using the LLM."""
         # Replace {PREVIOUS_FRAMES} token with formatted previous analyses
-        prompt_with_history = self.frame_prompt.replace(
-            "{PREVIOUS_FRAMES}", 
-            self._format_previous_analyses()
-        )
-        
-        prompt = f"{prompt_with_history}\nThis is frame {frame.number} captured at {frame.timestamp:.2f} seconds."
+        # Replace tokens in the prompt template
+        prompt = self.frame_prompt.replace("{PREVIOUS_FRAMES}", self._format_previous_analyses())
+        prompt = prompt.replace("{prompt}", self._format_user_prompt())
+        prompt = f"{prompt}\nThis is frame {frame.number} captured at {frame.timestamp:.2f} seconds."
         
         try:
             response = self.client.generate(
@@ -89,7 +103,8 @@ class VideoAnalyzer:
             transcript_text = transcript.text
         
         # Replace tokens in the prompt template
-        prompt = self.video_prompt.replace("{FRAME_NOTES}", analysis_text)
+        prompt = self.video_prompt.replace("{prompt}", self._format_user_prompt())
+        prompt = prompt.replace("{FRAME_NOTES}", analysis_text)
         prompt = prompt.replace("{FIRST_FRAME}", first_frame_text)
         prompt = prompt.replace("{TRANSCRIPT}", transcript_text)
         

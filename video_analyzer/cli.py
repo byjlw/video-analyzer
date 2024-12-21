@@ -75,6 +75,8 @@ def main():
     parser.add_argument("--log-level", type=str, default="INFO", 
                         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
                         help="Set the logging level (default: INFO)")
+    parser.add_argument("--prompt", type=str, default="",
+                        help="Question to ask about the video")
     args = parser.parse_args()
 
     # Set up logging with specified level
@@ -135,7 +137,7 @@ def main():
         # Stage 2: Frame Analysis
         if args.start_stage <= 2:
             logger.info("Analyzing frames...")
-            analyzer = VideoAnalyzer(client, model, prompt_loader)
+            analyzer = VideoAnalyzer(client, model, prompt_loader, config.get("prompt", ""))
             frame_analyses = []
             for frame in frames:
                 analysis = analyzer.analyze_frame(frame)

@@ -98,12 +98,16 @@ Two key prompts:
    - Analyzes single frame
    - Includes timestamp context
    - Focuses on visual elements and actions
+   - Supports user questions through {prompt} token
 
 2. describe.txt
    - Combines frame analyses
-   - uses 1 frame
+   - Uses 1 frame
    - Integrates transcript
    - Creates a description of the video based on all the past frames
+   - Supports user questions through {prompt} token
+
+Both prompts support user questions via the --prompt flag. When a question is provided, it is prefixed with "I want to know" and injected into the prompts using the {prompt} token. This allows users to ask specific questions about the video that guide both the frame analysis and final description.
 
 ## Sample output
 [Sample Output](sample_analysis.json)

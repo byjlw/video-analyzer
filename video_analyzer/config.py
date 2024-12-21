@@ -72,6 +72,8 @@ class Config:
                 elif key == "model":
                     client = self.config["clients"]["default"]
                     self.config["clients"][client]["model"] = value
+                elif key == "prompt":
+                    self.config["prompt"] = value
                 elif key not in ["start_stage", "max_frames"]:  # Ignore these as they're command-line only
                     self.config[key] = value
 

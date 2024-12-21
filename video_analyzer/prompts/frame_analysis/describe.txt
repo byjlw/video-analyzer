@@ -81,6 +81,8 @@ Technical terms are used correctly
 The opening matches your viewed frame
 Transitions between described frames feel natural
 
+{prompt}
+
 Format Your Summary As:
 
 ```

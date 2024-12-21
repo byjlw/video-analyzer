@@ -4,7 +4,7 @@ Previous Notes Section
 
 {PREVIOUS_FRAMES}
 
-Your Task
+Your Tasks
 You are viewing Frame [X] of this video sequence. Your goal is to document what you observe in a way that contributes to a coherent narrative of the entire video.
 Step 1: Quick Scan
 
@@ -51,6 +51,8 @@ Be specific and concise
 Avoid interpretation - stick to what you can see
 Use clear transitional phrases to connect to previous descriptions
 Include timestamp if available
+
+{prompt}
 
 Format Your Notes As:
 
