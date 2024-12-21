@@ -1,5 +1,5 @@
-# Existing dependencies
-
 # GUI dependencies
 PyQt6>=6.4.0
 python-vlc>=3.0.20000
+
+# Keep existing dependencies below this line
