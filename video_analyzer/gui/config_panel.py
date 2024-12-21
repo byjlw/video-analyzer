@@ -13,6 +13,7 @@ class ConfigPanel(QWidget):
         self.settings = Settings()
         self.init_ui()
         self.load_settings()
+        self.setup_connections()
 
     def init_ui(self):
         layout = QVBoxLayout(self)
@@ -23,13 +24,11 @@ class ConfigPanel(QWidget):
         
         self.video_path = QLineEdit()
         browse_button = QPushButton("Browse Video")
-        browse_button.clicked.connect(self.browse_video)
         video_layout.addRow("Video File:", self.video_path)
         video_layout.addRow("", browse_button)
 
         self.output_dir = QLineEdit()
         browse_output = QPushButton("Browse Output")
-        browse_output.clicked.connect(self.browse_output)
         video_layout.addRow("Output Directory:", self.output_dir)
         video_layout.addRow("", browse_output)
         
@@ -97,6 +96,26 @@ class ConfigPanel(QWidget):
         
         layout.addStretch()
 
+        # Connect buttons to their handlers
+        browse_button.clicked.connect(self.browse_video)
+        browse_output.clicked.connect(self.browse_output)
+
+    def setup_connections(self):
+        # Save settings when values change, but don't trigger analysis
+        self.client_type.currentTextChanged.connect(self.save_current_settings)
+        self.ollama_url.textChanged.connect(self.save_current_settings)
+        self.openrouter_key.textChanged.connect(self.save_current_settings)
+        self.model.textChanged.connect(self.save_current_settings)
+        self.duration.valueChanged.connect(self.save_current_settings)
+        self.max_frames.valueChanged.connect(self.save_current_settings)
+        self.whisper_model.currentTextChanged.connect(self.save_current_settings)
+        self.keep_frames.stateChanged.connect(self.save_current_settings)
+        self.prompt.textChanged.connect(self.save_current_settings)
+
+    def save_current_settings(self):
+        config = self.get_config()
+        self.settings.save(config)
+
     def browse_video(self):
         file_name, _ = QFileDialog.getOpenFileName(
             self,
@@ -106,7 +125,8 @@ class ConfigPanel(QWidget):
         )
         if file_name:
             self.video_path.setText(file_name)
-            self.video_selected.emit(file_name)  # Emit signal when video is selected
+            self.video_selected.emit(file_name)
+            self.save_current_settings()
 
     def browse_output(self):
         dir_name = QFileDialog.getExistingDirectory(
@@ -116,9 +136,10 @@ class ConfigPanel(QWidget):
         )
         if dir_name:
             self.output_dir.setText(dir_name)
+            self.save_current_settings()
 
     def get_config(self):
-        config = {
+        return {
             'video_path': self.video_path.text(),
             'output_dir': self.output_dir.text(),
             'client': self.client_type.currentText(),
@@ -131,8 +152,6 @@ class ConfigPanel(QWidget):
             'keep_frames': self.keep_frames.isChecked(),
             'prompt': self.prompt.text()
         }
-        self.settings.save(config)
-        return config
 
     def load_settings(self):
         config = self.settings.load()
