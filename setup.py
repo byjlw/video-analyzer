@@ -10,7 +10,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 # Create data_files list for config and prompts
 data_files = [
-    ('video_analyzer/config', ['config/default_config.json'])
+    ('video_analyzer/config', ['video_analyzer/config/default_config.json'])
 ]
 
 # Recursively add all files from prompts directory
