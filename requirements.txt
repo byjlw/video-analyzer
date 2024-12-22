@@ -4,3 +4,4 @@ torch>=2.0.0
 openai-whisper>=20231117
 requests>=2.31.0
 Pillow>=10.0.0
+pydub>=0.25.1
