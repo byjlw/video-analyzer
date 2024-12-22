@@ -126,7 +126,7 @@ video-analyzer/
 │       └── describe.txt
 ├── output/             # Generated during runtime
 ├── video_analyzer/     # Package source code
-└── setup.py           # Package installation configuration
+└── setup.py            # Package installation configuration
 ```
 
 ## Usage
