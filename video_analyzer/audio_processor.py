@@ -50,8 +50,9 @@ class AudioProcessor:
             logger.error(f"Error loading Whisper model: {e}")
             raise
 
-    def extract_audio(self, video_path: Path, output_dir: Path) -> Path:
-        """Extract audio from video file and convert to format suitable for Whisper."""
+    def extract_audio(self, video_path: Path, output_dir: Path) -> Optional[Path]:
+        """Extract audio from video file and convert to format suitable for Whisper.
+        Returns None if video has no audio streams."""
         audio_path = output_dir / "audio.wav"
         output_dir.mkdir(parents=True, exist_ok=True)
         
@@ -70,9 +71,16 @@ class AudioProcessor:
             logger.debug("Successfully extracted audio using ffmpeg")
             return audio_path
         except subprocess.CalledProcessError as e:
-            logger.error(f"FFmpeg error: {e.stderr.decode()}")
-            logger.info("Falling back to pydub for audio extraction...")
+            error_output = e.stderr.decode()
+            logger.error(f"FFmpeg error: {error_output}")
             
+            # Check if error indicates no audio streams
+            if "Output file does not contain any stream" in error_output:
+                logger.debug("No audio streams found in video - skipping audio extraction")
+                return None
+                
+            # If error is not about missing audio, try pydub as fallback
+            logger.info("Falling back to pydub for audio extraction...")
             try:
                 video = AudioSegment.from_file(str(video_path))
                 audio = video.set_channels(1).set_frame_rate(16000)
@@ -81,6 +89,7 @@ class AudioProcessor:
                 return audio_path
             except Exception as e2:
                 logger.error(f"Error extracting audio using pydub: {e2}")
+                # If both methods fail, raise error
                 raise RuntimeError(
                     "Failed to extract audio. Please install ffmpeg using:\n"
                     "Ubuntu/Debian: sudo apt-get update && sudo apt-get install -y ffmpeg\n"

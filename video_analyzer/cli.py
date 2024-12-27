@@ -116,10 +116,14 @@ def main():
             logger.info("Extracting audio from video...")
             audio_path = audio_processor.extract_audio(video_path, output_dir)
             
-            logger.info("Transcribing audio...")
-            transcript = audio_processor.transcribe(audio_path)
-            if transcript is None:
-                logger.warning("Could not generate reliable transcript. Proceeding with video analysis only.")
+            if audio_path is None:
+                logger.debug("No audio found in video - skipping transcription")
+                transcript = None
+            else:
+                logger.info("Transcribing audio...")
+                transcript = audio_processor.transcribe(audio_path)
+                if transcript is None:
+                    logger.warning("Could not generate reliable transcript. Proceeding with video analysis only.")
             
             logger.info(f"Extracting frames from video using model {model}...")
             processor = VideoProcessor(
