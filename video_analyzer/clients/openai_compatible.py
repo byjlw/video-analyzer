@@ -1,8 +1,7 @@
 import requests
 import json
 import time
-import re
-from typing import Optional, Dict, Any, Tuple
+from typing import Optional, Dict, Any
 from .llm_client import LLMClient
 import logging
 
