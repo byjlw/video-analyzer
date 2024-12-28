@@ -15,20 +15,23 @@ from .analyzer import VideoAnalyzer
 from .audio_processor import AudioProcessor, AudioTranscript
 from .clients.ollama import OllamaClient
 from .clients.openrouter import OpenRouterClient
+from .clients.openai_compatible import OpenAICompatibleClient
 
 # Initialize logger at module level
 logger = logging.getLogger(__name__)
 
+
 def get_log_level(level_str: str) -> int:
     """Convert string log level to logging constant."""
     levels = {
-        'DEBUG': logging.DEBUG,
-        'INFO': logging.INFO,
-        'WARNING': logging.WARNING,
-        'ERROR': logging.ERROR,
-        'CRITICAL': logging.CRITICAL
+        "DEBUG": logging.DEBUG,
+        "INFO": logging.INFO,
+        "WARNING": logging.WARNING,
+        "ERROR": logging.ERROR,
+        "CRITICAL": logging.CRITICAL,
     }
     return levels.get(level_str.upper(), logging.INFO)
+
 
 def cleanup_files(output_dir: Path):
     """Clean up temporary files and directories."""
@@ -54,6 +57,8 @@ def create_client(config: Config):
         return OllamaClient(client_config)
     elif client_type == "openrouter":
         return OpenRouterClient(client_config)
+    elif client_type == "openai_compatible":
+        return OpenAICompatibleClient(*client_config)
     else:
         raise ValueError(f"Unknown client type: {client_type}")
 
@@ -66,6 +71,8 @@ def main():
     parser.add_argument("--client", type=str, help="Client to use (ollama or openrouter)")
     parser.add_argument("--ollama-url", type=str, help="URL for the Ollama service")
     parser.add_argument("--openrouter-key", type=str, help="API key for OpenRouter service")
+    parser.add_argument("--openai-compatible-key", type=str, help="API key for OpenAI Compatible service")
+    parser.add_argument("--openai-compatible-base-url", type=str, help="Base URL for OpenAI Compatible service")
     parser.add_argument("--model", type=str, help="Name of the vision model to use")
     parser.add_argument("--duration", type=float, help="Duration in seconds to process")
     parser.add_argument("--keep-frames", action="store_true", help="Keep extracted frames after analysis")

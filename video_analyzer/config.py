@@ -69,39 +69,62 @@ class Config:
                     # If key is provided but no client specified, use OpenRouter
                     if not args.client:
                         self.config["clients"]["default"] = "openrouter"
+                elif key == "openai_compatible_key":
+                    self.config["clients"]["openai_compatible"]["api_key"] = value
+                elif key == "openai_compatible_base_url":
+                    self.config["clients"]["openai_compatible"]["base_url"] = value
                 elif key == "model":
                     client = self.config["clients"]["default"]
                     self.config["clients"][client]["model"] = value
                 elif key == "prompt":
                     self.config["prompt"] = value
-                elif key not in ["start_stage", "max_frames"]:  # Ignore these as they're command-line only
+                elif key not in [
+                    "start_stage",
+                    "max_frames",
+                ]:  # Ignore these as they're command-line only
                     self.config[key] = value
 
     def save_user_config(self):
         """Save current configuration to user config file."""
         try:
             self.config_dir.mkdir(parents=True, exist_ok=True)
-            with open(self.user_config, 'w') as f:
+            with open(self.user_config, "w") as f:
                 json.dump(self.config, f, indent=2)
             logger.debug(f"Saved user config to {self.user_config}")
         except Exception as e:
             logger.error(f"Error saving user config: {e}")
             raise
 
-def get_client(config: Config) -> str:
+
+def get_client(config: Config) -> str | tuple[str, str]:
     """Get the appropriate client based on configuration."""
     client_type = config.get("clients", {}).get("default", "ollama")
     client_config = config.get("clients", {}).get(client_type, {})
-    
+
     if client_type == "ollama":
         return client_config.get("url", "http://localhost:11434")
     elif client_type == "openrouter":
         api_key = client_config.get("api_key")
         if not api_key:
-            raise ValueError("OpenRouter API key is required when using OpenRouter client")
+            raise ValueError(
+                "OpenRouter API key is required when using OpenRouter client"
+            )
         return api_key
+    elif client_type == "openai_compatible":
+        api_key = client_config.get("api_key")
+        base_url = client_config.get("base_url")
+        if not api_key:
+            raise ValueError(
+                "OpenAI API key is required when using OpenAI Compatible client"
+            )
+        if not base_url:
+            raise ValueError(
+                "OpenAI Base URL is required when using OpenAI Compatible client"
+            )
+        return api_key, base_url
     else:
         raise ValueError(f"Unknown client type: {client_type}")
+
 
 def get_model(config: Config) -> str:
     """Get the appropriate model based on client type and configuration."""

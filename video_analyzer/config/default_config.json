@@ -8,6 +8,11 @@
         "openrouter": {
             "api_key": "",
             "model": "meta-llama/llama-3.2-11b-vision-instruct"
+        },
+        "openai_compatible": {
+            "api_key": "",
+            "model": "gpt-4o",
+            "base_url": "https://api.openai.com/v1"
         }
     },
     "prompt_dir": "prompts",
