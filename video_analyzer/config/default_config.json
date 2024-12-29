@@ -5,9 +5,10 @@
             "url": "http://localhost:11434",
             "model": "llama3.2-vision"
         },
-        "openrouter": {
+        "openai_api": {
             "api_key": "",
-            "model": "meta-llama/llama-3.2-11b-vision-instruct"
+            "model": "meta-llama/llama-3.2-11b-vision-instruct",
+            "service_url": "https://openrouter.ai/api/v1"
         }
     },
     "prompt_dir": "prompts",

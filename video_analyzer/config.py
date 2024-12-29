@@ -64,11 +64,13 @@ class Config:
                     self.config["clients"]["default"] = value
                 elif key == "ollama_url":
                     self.config["clients"]["ollama"]["url"] = value
-                elif key == "openrouter_key":
-                    self.config["clients"]["openrouter"]["api_key"] = value
-                    # If key is provided but no client specified, use OpenRouter
+                elif key == "api_key":
+                    self.config["clients"]["openai_api"]["api_key"] = value
+                    # If key is provided but no client specified, use OpenAI API
                     if not args.client:
-                        self.config["clients"]["default"] = "openrouter"
+                        self.config["clients"]["default"] = "openai_api"
+                elif key == "service_url":
+                    self.config["clients"]["openai_api"]["service_url"] = value
                 elif key == "model":
                     client = self.config["clients"]["default"]
                     self.config["clients"][client]["model"] = value
@@ -88,18 +90,24 @@ class Config:
             logger.error(f"Error saving user config: {e}")
             raise
 
-def get_client(config: Config) -> str:
-    """Get the appropriate client based on configuration."""
+def get_client(config: Config) -> dict:
+    """Get the appropriate client configuration based on configuration."""
     client_type = config.get("clients", {}).get("default", "ollama")
     client_config = config.get("clients", {}).get(client_type, {})
     
     if client_type == "ollama":
-        return client_config.get("url", "http://localhost:11434")
-    elif client_type == "openrouter":
+        return {"url": client_config.get("url", "http://localhost:11434")}
+    elif client_type == "openai_api":
         api_key = client_config.get("api_key")
+        service_url = client_config.get("service_url")
         if not api_key:
-            raise ValueError("OpenRouter API key is required when using OpenRouter client")
-        return api_key
+            raise ValueError("API key is required when using OpenAI API client")
+        if not service_url:
+            raise ValueError("Service URL is required when using OpenAI API client")
+        return {
+            "api_key": api_key,
+            "service_url": service_url
+        }
     else:
         raise ValueError(f"Unknown client type: {client_type}")
 

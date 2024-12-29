@@ -93,26 +93,37 @@ ollama pull llama3.2-vision
 ollama serve
 ```
 
-### OpenRouter Setup (Optional)
+### OpenAI-compatible API Setup (Optional)
 
-If you want to use OpenRouter instead of Ollama:
+If you want to use OpenAI-compatible APIs (like OpenRouter or OpenAI) instead of Ollama:
 
-*Currently you can use llama 3.2 11b vision for free by adding :free to the model in default_config
+1. Get an API key from your provider:
+   - [OpenRouter](https://openrouter.ai)
+   - [OpenAI](https://platform.openai.com)
 
-1. Get an API key from [OpenRouter](https://openrouter.ai)
-2. Either:
-   - Pass it via command line: `--openrouter-key your-api-key`
-   - Or add it to config/config.json:
-     ```json
-     {
-       "clients": {
-         "default": "openrouter",
-         "openrouter": {
-           "api_key": "your-api-key"
-         }
+2. Configure via command line:
+   ```bash
+   # For OpenRouter
+   video-analyzer video.mp4 --client openai_api --api-key your-key --service-url https://openrouter.ai/api/v1
+
+   # For OpenAI
+   video-analyzer video.mp4 --client openai_api --api-key your-key --service-url https://api.openai.com/v1
+   ```
+
+   Or add to config/config.json:
+   ```json
+   {
+     "clients": {
+       "default": "openai_api",
+       "openai_api": {
+         "api_key": "your-api-key",
+         "service_url": "https://openrouter.ai/api/v1"  # or https://api.openai.com/v1
        }
      }
-     ```
+   }
+   ```
+
+Note: With OpenRouter, you can use llama 3.2 11b vision for free by adding :free to the model name
 
 ## Project Structure
 
@@ -138,9 +149,9 @@ Using Ollama (default):
 video-analyzer path/to/video.mp4
 ```
 
-Using OpenRouter:
+Using OpenAI-compatible API:
 ```bash
-video-analyzer path/to/video.mp4 --openrouter-key your-api-key
+video-analyzer path/to/video.mp4 --client openai_api --api-key your-key --service-url https://openrouter.ai/api/v1
 ```
 
 #### Sample Output
@@ -154,8 +165,9 @@ Video Summary**\n\nDuration: 5 minutes and 67 seconds\n\nThe video begins with a
 video-analyzer path/to/video.mp4 \
     --config custom_config.json \
     --output ./custom_output \
-    --client openrouter \
-    --openrouter-key your-api-key \
+    --client openai_api \
+    --api-key your-key \
+    --service-url https://openrouter.ai/api/v1 \
     --model llama3.2-vision \
     --frames-per-minute 15 \
     --duration 60 \
@@ -170,9 +182,10 @@ video-analyzer path/to/video.mp4 \
 | `video_path` | Path to the input video file | (Required) |
 | `--config` | Path to configuration directory | config/ |
 | `--output` | Output directory for analysis results | output/ |
-| `--client` | Client to use (ollama or openrouter) | ollama |
+| `--client` | Client to use (ollama or openai_api) | ollama |
 | `--ollama-url` | URL for the Ollama service | http://localhost:11434 |
-| `--openrouter-key` | API key for OpenRouter service | None |
+| `--api-key` | API key for OpenAI-compatible service | None |
+| `--service-url` | Service URL for OpenAI-compatible API | None |
 | `--model` | Name of the vision model to use | llama3.2-vision |
 | `--frames-per-minute` | Target number of frames to extract | 10 |
 | `--duration` | Duration in seconds to process | None (full video) |
@@ -190,11 +203,12 @@ The tool uses a cascading configuration system:
 ### Configuration Options
 
 #### General Settings
-- `clients.default`: Default client to use (ollama or openrouter)
+- `clients.default`: Default client to use (ollama or openai_api)
 - `clients.ollama.url`: URL for the Ollama service
 - `clients.ollama.model`: Vision model to use with Ollama
-- `clients.openrouter.api_key`: API key for OpenRouter service
-- `clients.openrouter.model`: Vision model to use with OpenRouter
+- `clients.openai_api.api_key`: API key for OpenAI-compatible service
+- `clients.openai_api.service_url`: Service URL for OpenAI-compatible API
+- `clients.openai_api.model`: Vision model to use with OpenAI-compatible API
 - `prompt_dir`: Directory containing prompt files
 - `output_dir`: Directory for output files
 - `frames.per_minute`: Target number of frames to extract per minute

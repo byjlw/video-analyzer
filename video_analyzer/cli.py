@@ -14,7 +14,7 @@ from .prompt import PromptLoader
 from .analyzer import VideoAnalyzer
 from .audio_processor import AudioProcessor, AudioTranscript
 from .clients.ollama import OllamaClient
-from .clients.openrouter import OpenRouterClient
+from .clients.generic_openai_api import GenericOpenAIAPIClient
 
 # Initialize logger at module level
 logger = logging.getLogger(__name__)
@@ -51,9 +51,9 @@ def create_client(config: Config):
     client_config = get_client(config)
     
     if client_type == "ollama":
-        return OllamaClient(client_config)
-    elif client_type == "openrouter":
-        return OpenRouterClient(client_config)
+        return OllamaClient(client_config["url"])
+    elif client_type == "openai_api":
+        return GenericOpenAIAPIClient(client_config["api_key"], client_config["service_url"])
     else:
         raise ValueError(f"Unknown client type: {client_type}")
 
@@ -65,7 +65,8 @@ def main():
     parser.add_argument("--output", type=str, help="Output directory for analysis results")
     parser.add_argument("--client", type=str, help="Client to use (ollama or openrouter)")
     parser.add_argument("--ollama-url", type=str, help="URL for the Ollama service")
-    parser.add_argument("--openrouter-key", type=str, help="API key for OpenRouter service")
+    parser.add_argument("--api-key", type=str, help="API key for OpenAI-compatible service")
+    parser.add_argument("--service-url", type=str, help="Service URL for OpenAI-compatible API")
     parser.add_argument("--model", type=str, help="Name of the vision model to use")
     parser.add_argument("--duration", type=float, help="Duration in seconds to process")
     parser.add_argument("--keep-frames", action="store_true", help="Keep extracted frames after analysis")

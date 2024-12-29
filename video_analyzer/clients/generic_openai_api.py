@@ -10,13 +10,13 @@ logger = logging.getLogger(__name__)
 
 # Constants
 DEFAULT_MAX_RETRIES = 3
-RATE_LIMIT_WAIT_TIME = 25 # seconds
+RATE_LIMIT_WAIT_TIME = 25  # seconds
 DEFAULT_WAIT_TIME = 25  # seconds
 
-class OpenRouterClient(LLMClient):
-    def __init__(self, api_key: str, max_retries: int = DEFAULT_MAX_RETRIES):
+class GenericOpenAIAPIClient(LLMClient):
+    def __init__(self, api_key: str, service_url: str, max_retries: int = DEFAULT_MAX_RETRIES):
         self.api_key = api_key
-        self.base_url = "https://openrouter.ai/api/v1"
+        self.base_url = service_url.rstrip('/')  # Remove trailing slash if present
         self.generate_url = f"{self.base_url}/chat/completions"
         self.max_retries = max_retries
 
@@ -27,7 +27,7 @@ class OpenRouterClient(LLMClient):
         model: str = "llama3.2-vision",
         temperature: float = 0.2,
         num_predict: int = 256) -> Dict[Any, Any]:
-        """Generate response from OpenRouter API."""
+        """Generate response from OpenAI-compatible API."""
         # Prepare request content
         if image_path:
             base64_image = self.encode_image(image_path)

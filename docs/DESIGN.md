@@ -54,10 +54,11 @@ class LLMClient:
    - Sends images as base64 in "images" array
    - Returns raw response from Ollama
 
-2. OpenRouter (openrouter.py)
-   - Uses OpenRouter's chat completions API
+2. Generic OpenAI API (generic_openai_api.py)
+   - Compatible with OpenAI-style APIs (OpenAI, OpenRouter, etc.)
+   - Configurable service URL (e.g. OpenRouter: https://openrouter.ai/api/v1, OpenAI: https://api.openai.com/v1)
    - Sends images as content array with type "image_url"
-   - Requires specific headers and API key
+   - Requires API key and service URL
    - Returns standardized response format
 
 ## Configuration System
@@ -76,8 +77,9 @@ Key configuration groups:
             "url": "http://localhost:11434",
             "model": "llama3.2-vision"
         },
-        "openrouter": {
+        "openai_api": {
             "api_key": "",
+            "service_url": "https://openrouter.ai/api/v1",
             "model": "meta-llama/llama-3.2-11b-vision-instruct:free"
         }
     },
