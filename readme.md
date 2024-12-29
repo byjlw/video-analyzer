@@ -113,6 +113,24 @@ If you want to use OpenRouter instead of Ollama:
        }
      }
      ```
+### OpenAI Compatible Setup (Optional)
+
+If you want to use OpenAI Compatible instead of Ollama or OpenRouter:
+
+1. Get an API key from [OpenAI](https://platform.openai.com/api-keys)
+2. Pass it via command line: `--openai-compatible-key your-api-key`
+3. Optionally, pass the base URL: `--openai-compatible-base-url https://api.openai.com/v1`
+    ```json
+    {
+        "clients": {
+            "default": "openai_compatible",
+            "openai_compatible": {
+            "api_key": "your-api-key",
+            "base_url": "https://api.openai.com/v1"
+            }
+        }
+    }
+    ```
 
 ## Project Structure
 
@@ -141,6 +159,11 @@ video-analyzer path/to/video.mp4
 Using OpenRouter:
 ```bash
 video-analyzer path/to/video.mp4 --openrouter-key your-api-key
+```
+
+Using OpenAI Compatible:
+```bash
+video-analyzer path/to/video.mp4 --openai-compatible-key your-api-key --openai-compatible-base-url https://api.openai.com/v1
 ```
 
 #### Sample Output
@@ -173,6 +196,8 @@ video-analyzer path/to/video.mp4 \
 | `--client` | Client to use (ollama or openrouter) | ollama |
 | `--ollama-url` | URL for the Ollama service | http://localhost:11434 |
 | `--openrouter-key` | API key for OpenRouter service | None |
+| `--openai-compatible-key` | API key for OpenAI Compatible service | None |
+| `--openai-compatible-base-url` | Base URL for OpenAI Compatible service | https://api.openai.com/v1 |
 | `--model` | Name of the vision model to use | llama3.2-vision |
 | `--frames-per-minute` | Target number of frames to extract | 10 |
 | `--duration` | Duration in seconds to process | None (full video) |
@@ -195,6 +220,8 @@ The tool uses a cascading configuration system:
 - `clients.ollama.model`: Vision model to use with Ollama
 - `clients.openrouter.api_key`: API key for OpenRouter service
 - `clients.openrouter.model`: Vision model to use with OpenRouter
+- `clients.openai_compatible.api_key`: API key for OpenAI Compatible service
+- `clients.openai_compatible.base_url`: Base URL for OpenAI Compatible service
 - `prompt_dir`: Directory containing prompt files
 - `output_dir`: Directory for output files
 - `frames.per_minute`: Target number of frames to extract per minute
