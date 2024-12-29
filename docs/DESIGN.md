@@ -92,6 +92,8 @@ Key configuration groups:
 
 ## Prompt System
 
+### Prompt Files
+
 Two key prompts:
 
 1. frame_analysis.txt
@@ -108,6 +110,47 @@ Two key prompts:
    - Supports user questions through {prompt} token
 
 Both prompts support user questions via the --prompt flag. When a question is provided, it is prefixed with "I want to know" and injected into the prompts using the {prompt} token. This allows users to ask specific questions about the video that guide both the frame analysis and final description.
+
+### Prompt Loading System
+
+The prompt loading system supports flexible prompt file locations and custom prompts:
+
+1. Path Resolution:
+   - User-specified directory (via config `prompt_dir`):
+     * Absolute paths: `/path/to/prompts`
+     * User home paths: `~/prompts`
+     * Relative paths: Checked against:
+       1. Current working directory
+       2. Package root directory
+   - Package resources (fallback)
+
+2. Development Workflow:
+   - Install in dev mode: `pip install -e .`
+   - Modify prompt files directly
+   - Changes reflect immediately without reinstall
+   - Works from any directory
+
+3. Configuration:
+```json
+{
+    "prompt_dir": "/absolute/path/to/prompts",  // Absolute path
+    // or "~/prompts"                          // User home directory
+    // or "prompts"                            // Relative path
+    // or ""                                   // Use package prompts only
+    "prompts": [
+        {
+            "name": "Frame Analysis",
+            "path": "frame_analysis/frame_analysis.txt"
+        },
+        {
+            "name": "Video Reconstruction",
+            "path": "frame_analysis/describe.txt"
+        }
+    ]
+}
+```
+
+The system prioritizes user-specified prompts over package prompts, enabling customization while maintaining reliable fallbacks.
 
 ## Sample output
 [Sample Output](sample_analysis.json)
