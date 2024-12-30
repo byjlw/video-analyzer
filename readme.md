@@ -107,7 +107,7 @@ If you want to use OpenAI-compatible APIs (like OpenRouter or OpenAI) instead of
    video-analyzer video.mp4 --client openai_api --api-key your-key --api-url https://openrouter.ai/api/v1
 
    # For OpenAI
-   video-analyzer video.mp4 --client openai_api --api-key your-key --api-url httpd
+   video-analyzer video.mp4 --client openai_api --api-key your-key --api-url https://api.openai.com/v1
    ```
 
    Or add to config/config.json:
