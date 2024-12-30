@@ -56,7 +56,7 @@ class LLMClient:
 
 2. Generic OpenAI API (generic_openai_api.py)
    - Compatible with OpenAI-style APIs (OpenAI, OpenRouter, etc.)
-   - Configurable service URL (e.g. OpenRouter: https://openrouter.ai/api/v1, OpenAI: https://api.openai.com/v1)
+   - Configurable API URL (e.g. OpenRouter: https://openrouter.ai/api/v1, OpenAI: https://api.openai.com/v1)
    - Sends images as content array with type "image_url"
    - Requires API key and service URL
    - Returns standardized response format
@@ -79,7 +79,7 @@ Key configuration groups:
         },
         "openai_api": {
             "api_key": "",
-            "service_url": "https://openrouter.ai/api/v1",
+            "api_url": "https://openrouter.ai/api/v1",
             "model": "meta-llama/llama-3.2-11b-vision-instruct:free"
         }
     },

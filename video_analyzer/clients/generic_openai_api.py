@@ -14,9 +14,9 @@ RATE_LIMIT_WAIT_TIME = 25  # seconds
 DEFAULT_WAIT_TIME = 25  # seconds
 
 class GenericOpenAIAPIClient(LLMClient):
-    def __init__(self, api_key: str, service_url: str, max_retries: int = DEFAULT_MAX_RETRIES):
+    def __init__(self, api_key: str, api_url: str, max_retries: int = DEFAULT_MAX_RETRIES):
         self.api_key = api_key
-        self.base_url = service_url.rstrip('/')  # Remove trailing slash if present
+        self.base_url = api_url.rstrip('/')  # Remove trailing slash if present
         self.generate_url = f"{self.base_url}/chat/completions"
         self.max_retries = max_retries
 

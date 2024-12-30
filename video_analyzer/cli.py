@@ -53,7 +53,7 @@ def create_client(config: Config):
     if client_type == "ollama":
         return OllamaClient(client_config["url"])
     elif client_type == "openai_api":
-        return GenericOpenAIAPIClient(client_config["api_key"], client_config["service_url"])
+        return GenericOpenAIAPIClient(client_config["api_key"], client_config["api_url"])
     else:
         raise ValueError(f"Unknown client type: {client_type}")
 
@@ -66,7 +66,7 @@ def main():
     parser.add_argument("--client", type=str, help="Client to use (ollama or openrouter)")
     parser.add_argument("--ollama-url", type=str, help="URL for the Ollama service")
     parser.add_argument("--api-key", type=str, help="API key for OpenAI-compatible service")
-    parser.add_argument("--service-url", type=str, help="Service URL for OpenAI-compatible API")
+    parser.add_argument("--api-url", type=str, help="API URL for OpenAI-compatible API")
     parser.add_argument("--model", type=str, help="Name of the vision model to use")
     parser.add_argument("--duration", type=float, help="Duration in seconds to process")
     parser.add_argument("--keep-frames", action="store_true", help="Keep extracted frames after analysis")

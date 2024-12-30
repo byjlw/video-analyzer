@@ -104,10 +104,10 @@ If you want to use OpenAI-compatible APIs (like OpenRouter or OpenAI) instead of
 2. Configure via command line:
    ```bash
    # For OpenRouter
-   video-analyzer video.mp4 --client openai_api --api-key your-key --service-url https://openrouter.ai/api/v1
+   video-analyzer video.mp4 --client openai_api --api-key your-key --api-url https://openrouter.ai/api/v1
 
    # For OpenAI
-   video-analyzer video.mp4 --client openai_api --api-key your-key --service-url https://api.openai.com/v1
+   video-analyzer video.mp4 --client openai_api --api-key your-key --api-url httpd
    ```
 
    Or add to config/config.json:
@@ -117,7 +117,7 @@ If you want to use OpenAI-compatible APIs (like OpenRouter or OpenAI) instead of
        "default": "openai_api",
        "openai_api": {
          "api_key": "your-api-key",
-         "service_url": "https://openrouter.ai/api/v1"  # or https://api.openai.com/v1
+         "api_url": "https://openrouter.ai/api/v1"  # or https://api.openai.com/v1
        }
      }
    }
@@ -151,7 +151,7 @@ video-analyzer path/to/video.mp4
 
 Using OpenAI-compatible API:
 ```bash
-video-analyzer path/to/video.mp4 --client openai_api --api-key your-key --service-url https://openrouter.ai/api/v1
+video-analyzer path/to/video.mp4 --client openai_api --api-key your-key --api-url https://openrouter.ai/api/v1
 ```
 
 #### Sample Output
@@ -167,7 +167,7 @@ video-analyzer path/to/video.mp4 \
     --output ./custom_output \
     --client openai_api \
     --api-key your-key \
-    --service-url https://openrouter.ai/api/v1 \
+    --api-url https://openrouter.ai/api/v1 \
     --model llama3.2-vision \
     --frames-per-minute 15 \
     --duration 60 \
@@ -185,7 +185,7 @@ video-analyzer path/to/video.mp4 \
 | `--client` | Client to use (ollama or openai_api) | ollama |
 | `--ollama-url` | URL for the Ollama service | http://localhost:11434 |
 | `--api-key` | API key for OpenAI-compatible service | None |
-| `--service-url` | Service URL for OpenAI-compatible API | None |
+| `--api-url` | API URL for OpenAI-compatible API | None |
 | `--model` | Name of the vision model to use | llama3.2-vision |
 | `--frames-per-minute` | Target number of frames to extract | 10 |
 | `--duration` | Duration in seconds to process | None (full video) |
@@ -207,7 +207,7 @@ The tool uses a cascading configuration system:
 - `clients.ollama.url`: URL for the Ollama service
 - `clients.ollama.model`: Vision model to use with Ollama
 - `clients.openai_api.api_key`: API key for OpenAI-compatible service
-- `clients.openai_api.service_url`: Service URL for OpenAI-compatible API
+- `clients.openai_api.api_url`: API URL for OpenAI-compatible API
 - `clients.openai_api.model`: Vision model to use with OpenAI-compatible API
 - `prompt_dir`: Directory containing prompt files
 - `output_dir`: Directory for output files

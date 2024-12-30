@@ -69,8 +69,8 @@ class Config:
                     # If key is provided but no client specified, use OpenAI API
                     if not args.client:
                         self.config["clients"]["default"] = "openai_api"
-                elif key == "service_url":
-                    self.config["clients"]["openai_api"]["service_url"] = value
+                elif key == "api_url":
+                    self.config["clients"]["openai_api"]["api_url"] = value
                 elif key == "model":
                     client = self.config["clients"]["default"]
                     self.config["clients"][client]["model"] = value
@@ -99,14 +99,14 @@ def get_client(config: Config) -> dict:
         return {"url": client_config.get("url", "http://localhost:11434")}
     elif client_type == "openai_api":
         api_key = client_config.get("api_key")
-        service_url = client_config.get("service_url")
+        api_url = client_config.get("api_url")
         if not api_key:
             raise ValueError("API key is required when using OpenAI API client")
-        if not service_url:
-            raise ValueError("Service URL is required when using OpenAI API client")
+        if not api_url:
+            raise ValueError("API URL is required when using OpenAI API client")
         return {
             "api_key": api_key,
-            "service_url": service_url
+            "api_url": api_url
         }
     else:
         raise ValueError(f"Unknown client type: {client_type}")
