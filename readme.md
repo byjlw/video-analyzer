@@ -1,10 +1,10 @@
-# Video Analysis using Llama3.2 Vision and OpenAI's Whisper Models locally
+# Video Analysis using vision models like Llama3.2 Vision and OpenAI's Whisper Models
 
-A video analysis tool that combines Llama's 11B vision model and Whisper to create a description by taking key frames, feeding them to the vision model to get details. It uses the details from each frame and the transcript, if available, to describe what's happening in the video. 
+A video analysis tool that combines vision models like Llama's 11B vision model and Whisper to create a description by taking key frames, feeding them to the vision model to get details. It uses the details from each frame and the transcript, if available, to describe what's happening in the video. 
 
 ## Features
 - 💻 Can run completely locally - no cloud services or API keys needed
-- ☁️  Or, Leverage openrouter's LLM service for speed and scale
+- ☁️  Or, leverage any OpenAI API compatible LLM service (openrouter, openai, etc) for speed and scale
 - 🎬 Intelligent key frame extraction from videos
 - 🔊 High-quality audio transcription using OpenAI's Whisper
 - 👁️ Frame analysis using Ollama and Llama3.2 11B Vision Model
