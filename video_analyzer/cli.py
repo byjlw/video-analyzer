@@ -112,7 +112,9 @@ def main():
         if args.start_stage <= 1:
             # Initialize audio processor and extract transcript
             logger.debug("Initializing audio processing...")
-            audio_processor = AudioProcessor(model_size=config.get("audio", {}).get("whisper_model", "medium"))
+            audio_processor = AudioProcessor(language=config.get("audio", {}).get("language", ""), 
+                                             model_size_or_path=config.get("audio", {}).get("whisper_model_size_or_path", "medium"),
+                                             device=config.get("audio", {}).get("device", "cpu"))
             
             logger.info("Extracting audio from video...")
             audio_path = audio_processor.extract_audio(video_path, output_dir)

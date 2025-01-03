@@ -17,7 +17,10 @@ class AudioTranscript:
     language: str
 
 class AudioProcessor:
-    def __init__(self, model_size: str = "medium"):
+    def __init__(self, 
+                 language: str | None = None,
+                 model_size_or_path: str = "medium",
+                 device: str = "cpu"):
         """Initialize audio processor with specified Whisper model size."""
         try:
             from faster_whisper import WhisperModel
@@ -27,16 +30,19 @@ class AudioProcessor:
             logger.debug(f"Using HuggingFace cache directory: {cache_dir}")
             
             # Force CPU usage for now faster whisper having issues with cudas
-            self.device = "cpu"
+            self.device = device
             compute_type = "float32"
             logger.debug(f"Using device: {self.device}")
 
+            self.language = language if language else None
+
             self.model = WhisperModel(
-                model_size,
-                device=self.device,
+                model_size_or_path,
+                device=device,
                 compute_type=compute_type
             )
-            logger.debug(f"Successfully loaded Whisper model: {model_size}")
+            print(model_size_or_path,device,compute_type,language)
+            logger.debug(f"Successfully loaded Whisper model: {model_size_or_path}")
             
             # Check for ffmpeg installation
             try:
@@ -106,7 +112,8 @@ class AudioProcessor:
                 beam_size=5,
                 word_timestamps=True,
                 vad_filter=True,
-                vad_parameters=dict(min_silence_duration_ms=500)
+                vad_parameters=dict(min_silence_duration_ms=500),
+                language= self.language
             )
             
             segments_list = list(segments)
