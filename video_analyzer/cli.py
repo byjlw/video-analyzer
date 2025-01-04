@@ -70,7 +70,7 @@ def main():
     parser.add_argument("--model", type=str, help="Name of the vision model to use")
     parser.add_argument("--duration", type=float, help="Duration in seconds to process")
     parser.add_argument("--keep-frames", action="store_true", help="Keep extracted frames after analysis")
-    parser.add_argument("--whisper-model", type=str, help="Whisper model size (tiny, base, small, medium, large)")
+    parser.add_argument("--whisper-model", type=str, help="Whisper model size (tiny, base, small, medium, large), or path to local Whisper model snapshot")
     parser.add_argument("--start-stage", type=int, default=1, help="Stage to start processing from (1-3)")
     parser.add_argument("--max-frames", type=int, default=sys.maxsize, help="Maximum number of frames to process")
     parser.add_argument("--log-level", type=str, default="INFO", 
@@ -78,6 +78,8 @@ def main():
                         help="Set the logging level (default: INFO)")
     parser.add_argument("--prompt", type=str, default="",
                         help="Question to ask about the video")
+    parser.add_argument("--language", type=str, default="None",)
+    parser.add_argument("--device", type=str, default="cpu")
     args = parser.parse_args()
 
     # Set up logging with specified level
@@ -110,10 +112,13 @@ def main():
         
         # Stage 1: Frame and Audio Processing
         if args.start_stage <= 1:
-            # Initialize audio processor and extract transcript
+            # Initialize audio processor and extract transcript, the AudioProcessor accept following parameters that can be set in config.json:
+            # language (str): Language code for audio transcription (default: None)
+            # whisper_model (str): Whisper model size or path (default: "medium")
+            # device (str): Device to use for audio processing (default: "cpu")
             logger.debug("Initializing audio processing...")
             audio_processor = AudioProcessor(language=config.get("audio", {}).get("language", ""), 
-                                             model_size_or_path=config.get("audio", {}).get("whisper_model_size_or_path", "medium"),
+                                             model_size_or_path=config.get("audio", {}).get("whisper_model", "medium"),
                                              device=config.get("audio", {}).get("device", "cpu"))
             
             logger.info("Extracting audio from video...")

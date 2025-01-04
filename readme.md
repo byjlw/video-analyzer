@@ -189,9 +189,11 @@ video-analyzer path/to/video.mp4 \
 | `--model` | Name of the vision model to use | llama3.2-vision |
 | `--frames-per-minute` | Target number of frames to extract | 10 |
 | `--duration` | Duration in seconds to process | None (full video) |
-| `--whisper-model` | Whisper model size | medium |
+| `--whisper-model` | Whisper model size or model path| medium |
 | `--keep-frames` | Keep extracted frames after analysis | False |
 | `--log-level` | Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) | INFO |
+| `--language` | Set language for transcription (if set as None, the language will be recognized) | None |
+| `--device` | Select device to run Whisper model (cpu, cuda) | cpu |
 
 ## Configuration
 
@@ -212,8 +214,9 @@ The tool uses a cascading configuration system:
 - `prompt_dir`: Directory containing prompt files
 - `output_dir`: Directory for output files
 - `frames.per_minute`: Target number of frames to extract per minute
-- `whisper_model`: Whisper model size (tiny, base, small, medium, large)
+- `whisper_model`: Whisper model size (tiny, base, small, medium, large) or Whisper model path. (For example, if using Windows, you can use **E:\\stt\\models\\models--Systran--faster-whisper-large-v3\\snapshots\\{UUID}** to load your local model, or you can use relative path of folder **{repo_path}\\video_analyzer\\video_analyzer**)
 - `keep_frames`: Whether to keep extracted frames after analysis
+- `prompt`: Question to ask about the video
 
 #### Frame Analysis Settings
 - `frames.analysis_threshold`: Threshold for key frame detection
@@ -230,7 +233,8 @@ The tool uses a cascading configuration system:
 - `audio.channels`: Number of audio channels
 - `audio.quality_threshold`: Minimum quality threshold for transcription
 - `audio.chunk_length`: Length of audio chunks for processing
-- `audio.language_confidence_threshold`: Confidence threshold for language detection
+- `audio.language_confidence_threshold`: Confidence threshold for language detection (the language will be detected in the first 30 seconds of audio.)
+- `audio.language`: Set language for for transcription, default is None (If set, the language_confidence_threshold will not be used)
 
 ## Output
 

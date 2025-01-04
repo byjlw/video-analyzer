@@ -21,7 +21,7 @@ class AudioProcessor:
                  language: str | None = None,
                  model_size_or_path: str = "medium",
                  device: str = "cpu"):
-        """Initialize audio processor with specified Whisper model size."""
+        """Initialize audio processor with specified Whisper model size or model path. By default, the medium model is used."""
         try:
             from faster_whisper import WhisperModel
             
@@ -41,7 +41,7 @@ class AudioProcessor:
                 device=device,
                 compute_type=compute_type
             )
-            print(model_size_or_path,device,compute_type,language)
+            logger.info(f"Initiation Input: Model size or path: {model_size_or_path}, Device: {device}, Compute type: {compute_type}, Language: {self.language if self.language else 'auto detected'}")
             logger.debug(f"Successfully loaded Whisper model: {model_size_or_path}")
             
             # Check for ffmpeg installation

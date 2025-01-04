@@ -76,6 +76,13 @@ class Config:
                     self.config["clients"][client]["model"] = value
                 elif key == "prompt":
                     self.config["prompt"] = value
+                #overide audio config
+                elif key == "whisper-model":
+                    self.config["audio"]["whisper_model"] = value #default is 'medium'
+                elif key == "language":
+                    self.config["audio"]["language"] = value
+                elif key == "device":
+                    self.config["audio"]["device"] = value
                 elif key not in ["start_stage", "max_frames"]:  # Ignore these as they're command-line only
                     self.config[key] = value
 
