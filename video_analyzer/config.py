@@ -77,7 +77,7 @@ class Config:
                 elif key == "prompt":
                     self.config["prompt"] = value
                 #overide audio config
-                elif key == "whisper-model":
+                elif key == "whisper_model":
                     self.config["audio"]["whisper_model"] = value #default is 'medium'
                 elif key == "language":
                     self.config["audio"]["language"] = value
