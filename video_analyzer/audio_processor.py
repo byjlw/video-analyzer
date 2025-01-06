@@ -105,6 +105,11 @@ class AudioProcessor:
 
     def transcribe(self, audio_path: Path) -> Optional[AudioTranscript]:
         """Transcribe audio file using Whisper with quality checks."""
+        accepted_languages = {
+                "af", "am", "ar", "as", "az", "ba", "be", "bg", "bn", "bo", "br", "bs", "ca", "cs", "cy", "da", "de", "el", "en", "es", "et", "eu", "fa", "fi", "fo", "fr", "gl", "gu", "ha", "haw", "he", "hi", "hr", "ht", "hu", "hy", "id", "is", "it", "ja", "jw", "ka", "kk", "km", "kn", "ko", "la", "lb", "ln", "lo", "lt", "lv", "mg", "mi", "mk", "ml", "mn", "mr", "ms", "mt", "my", "ne", "nl", "nn", "no", "oc", "pa", "pl", "ps", "pt", "ro", "ru", "sa", "sd", "si", "sk", "sl", "sn", "so", "sq", "sr", "su", "sv", "sw", "ta", "te", "tg", "th", "tk", "tl", "tr", "tt", "uk", "ur", "uz", "vi", "yi", "yo", "zh", "yue"
+        }
+        if self.language and self.language not in accepted_languages:
+            logger.warning(f"Invalid language code: {self.language}, will detect language automatically")
         try:
             # Initial transcription with VAD filtering
             segments, info = self.model.transcribe(
@@ -113,7 +118,7 @@ class AudioProcessor:
                 word_timestamps=True,
                 vad_filter=True,
                 vad_parameters=dict(min_silence_duration_ms=500),
-                language= self.language
+                language = self.language if self.language in accepted_languages else None
             )
             
             segments_list = list(segments)

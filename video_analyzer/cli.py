@@ -78,7 +78,7 @@ def main():
                         help="Set the logging level (default: INFO)")
     parser.add_argument("--prompt", type=str, default="",
                         help="Question to ask about the video")
-    parser.add_argument("--language", type=str, default="None",)
+    parser.add_argument("--language", type=str, default=None)
     parser.add_argument("--device", type=str, default="cpu")
     args = parser.parse_args()
 
