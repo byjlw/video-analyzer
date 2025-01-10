@@ -1,8 +1,8 @@
 include requirements.txt
 include readme.md
 include LICENSE
-recursive-include config *
-recursive-include prompts *
+recursive-include video_analyzer/config *
+recursive-include video_analyzer/prompts *
 global-exclude __pycache__
 global-exclude *.py[cod]
 global-exclude *.so
