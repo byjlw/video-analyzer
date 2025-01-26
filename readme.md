@@ -2,6 +2,26 @@
 
 A video analysis tool that combines vision models like Llama's 11B vision model and Whisper to create a description by taking key frames, feeding them to the vision model to get details. It uses the details from each frame and the transcript, if available, to describe what's happening in the video. 
 
+## Table of Contents
+- [Features](#features)
+- [Usage](#usage)
+  - [Quick Start](#quick-start)
+  - [Sample Output](#sample-output)
+  - [Complete Usage Guide](docs/USAGES.md)
+- [Requirements](#requirements)
+  - [System Requirements](#system-requirements)
+  - [Installation](#installation)
+  - [Ollama Setup](#ollama-setup)
+  - [OpenAI-compatible API Setup](#openai-compatible-api-setup-optional)
+- [Design](#design)
+  - [Detailed Design Documentation](docs/DESIGN.md)
+- [Project Structure](#project-structure)
+- [Configuration](#configuration)
+- [Output](#output)
+- [Uninstallation](#uninstallation)
+- [License](#license)
+- [Contributing](#contributing)
+
 ## Features
 - 💻 Can run completely locally - no cloud services or API keys needed
 - ☁️  Or, leverage any OpenAI API compatible LLM service (openrouter, openai, etc) for speed and scale
@@ -140,101 +160,40 @@ video-analyzer/
 └── setup.py            # Package installation configuration
 ```
 
+For detailed information about the project's design and implementation, including how to make changes, see [docs/DESIGN.md](docs/DESIGN.md).
+
 ## Usage
 
-### Basic Usage
+For detailed usage instructions and all available options, see [docs/USAGES.md](docs/USAGES.md).
 
-Using Ollama (default):
+### Quick Start
+
 ```bash
-video-analyzer path/to/video.mp4
+# Local analysis with Ollama (default)
+video-analyzer video.mp4
+
+# Cloud analysis with OpenRouter
+video-analyzer video.mp4 \
+    --client openai_api \
+    --api-key your-key \
+    --api-url https://openrouter.ai/api/v1 \
+    --model meta-llama/llama-3.2-11b-vision-instruct:free
+
+# Analysis with custom prompt
+video-analyzer video.mp4 \
+    --prompt "What activities are happening in this video?" \
+    --whisper-model large
 ```
 
-Using OpenAI-compatible API:
-```bash
-video-analyzer path/to/video.mp4 --client openai_api --api-key your-key --api-url https://openrouter.ai/api/v1
-```
-
-#### Sample Output
+### Sample Output
 ```
 Video Summary**\n\nDuration: 5 minutes and 67 seconds\n\nThe video begins with a person with long blonde hair, wearing a pink t-shirt and yellow shorts, standing in front of a black plastic tub or container on wheels. The ground appears to be covered in wood chips.\n\nAs the video progresses, the person remains facing away from the camera, looking down at something inside the tub. Their left hand is resting on their hip, while their right arm hangs loosely by their side. There are no new objects or people visible in this frame, but there appears to be some greenery and possibly fruit scattered around the ground behind the person.\n\nThe black plastic tub on wheels is present throughout the video, and the wood chips covering the ground remain consistent with those seen in Frame 0. The person's pink t-shirt matches the color of the shirt worn by the person in Frame 0.\n\nAs the video continues, the person remains stationary, looking down at something inside the tub. There are no significant changes or developments in this frame.\n\nThe key continuation point is to watch for the person to pick up an object from the tub and examine it more closely.\n\n**Key Continuation Points:**\n\n*   The person's pink t-shirt matches the color of the shirt worn by the person in Frame 0.\n*   The black plastic tub on wheels is also present in Frame 0.\n*   The wood chips covering the ground are consistent with those seen in Frame 0.
 ```
 
-### Advanced Usage
-
-```bash
-video-analyzer path/to/video.mp4 \
-    --config custom_config.json \
-    --output ./custom_output \
-    --client openai_api \
-    --api-key your-key \
-    --api-url https://openrouter.ai/api/v1 \
-    --model llama3.2-vision \
-    --frames-per-minute 15 \
-    --duration 60 \
-    --whisper-model medium \
-    --keep-frames
-```
-
-### Command Line Arguments
-
-| Argument | Description | Default |
-|----------|-------------|---------|
-| `video_path` | Path to the input video file | (Required) |
-| `--config` | Path to configuration directory | config/ |
-| `--output` | Output directory for analysis results | output/ |
-| `--client` | Client to use (ollama or openai_api) | ollama |
-| `--ollama-url` | URL for the Ollama service | http://localhost:11434 |
-| `--api-key` | API key for OpenAI-compatible service | None |
-| `--api-url` | API URL for OpenAI-compatible API | None |
-| `--model` | Name of the vision model to use | llama3.2-vision |
-| `--frames-per-minute` | Target number of frames to extract | 10 |
-| `--duration` | Duration in seconds to process | None (full video) |
-| `--whisper-model` | Whisper model size or model path| medium |
-| `--keep-frames` | Keep extracted frames after analysis | False |
-| `--log-level` | Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) | INFO |
-| `--language` | Set language for transcription (if set as None, the language will be recognized) | None |
-| `--device` | Select device to run Whisper model (cpu, cuda) | cpu |
 
 ## Configuration
 
-The tool uses a cascading configuration system:
-1. Command line arguments (highest priority)
-2. User config (config/config.json)
-3. Default config [config/default_config.json](config/default_config.json)
-
-### Configuration Options
-
-#### General Settings
-- `clients.default`: Default client to use (ollama or openai_api)
-- `clients.ollama.url`: URL for the Ollama service
-- `clients.ollama.model`: Vision model to use with Ollama
-- `clients.openai_api.api_key`: API key for OpenAI-compatible service
-- `clients.openai_api.api_url`: API URL for OpenAI-compatible API
-- `clients.openai_api.model`: Vision model to use with OpenAI-compatible API
-- `prompt_dir`: Directory containing prompt files
-- `output_dir`: Directory for output files
-- `frames.per_minute`: Target number of frames to extract per minute
-- `whisper_model`: Whisper model size (tiny, base, small, medium, large) or Whisper model path. (For example, if using Windows, you can use **E:\\stt\\models\\models--Systran--faster-whisper-large-v3\\snapshots\\{UUID}** to load your local model, or you can use relative path of folder **{repo_path}\\video_analyzer\\video_analyzer**)
-- `keep_frames`: Whether to keep extracted frames after analysis
-- `prompt`: Question to ask about the video
-
-#### Frame Analysis Settings
-- `frames.analysis_threshold`: Threshold for key frame detection
-- `frames.min_difference`: Minimum difference between frames
-- `frames.max_count`: Maximum number of frames to extract
-
-#### Response Length Settings
-- `response_length.frame`: Maximum length for frame analysis
-- `response_length.reconstruction`: Maximum length for video reconstruction
-- `response_length.narrative`: Maximum length for enhanced narrative
-
-#### Audio Settings
-- `audio.sample_rate`: Audio sample rate
-- `audio.channels`: Number of audio channels
-- `audio.quality_threshold`: Minimum quality threshold for transcription
-- `audio.chunk_length`: Length of audio chunks for processing
-- `audio.language_confidence_threshold`: Confidence threshold for language detection (the language will be detected in the first 30 seconds of audio.)
-- `audio.language`: Set language for for transcription, default is None (If set, the language_confidence_threshold will not be used)
+The tool uses a cascading configuration system with command line arguments taking highest priority, followed by user config (config/config.json), and finally the default config. See [docs/USAGES.md](docs/USAGES.md) for detailed configuration options.
 
 ## Output
 
@@ -256,8 +215,11 @@ pip uninstall video-analyzer
 
 ## License
 
-MIT License
+Apache License
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions! Please see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines on how to:
+- Review the project design
+- Propose changes through GitHub Discussions
+- Submit pull requests
