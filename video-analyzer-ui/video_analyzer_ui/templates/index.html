@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Video Analyzer</h1>
+        </header>
+
+        <main>
+            <!-- Upload Section -->
+            <section class="upload-section">
+                <div class="upload-area" id="dropZone">
+                    <input type="file" id="fileInput" accept=".mp4,.avi,.mov,.mkv" hidden>
+                    <div class="upload-content">
+                        <svg class="upload-icon" viewBox="0 0 24 24">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                        <p>Drag & drop video or click to upload</p>
+                        <p class="upload-formats">Supported formats: MP4, AVI, MOV, MKV</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Configuration Section -->
+            <section class="config-section" id="configSection" style="display: none;">
+                <h2>Analysis Configuration</h2>
+                <form id="analysisForm">
+                    <!-- Client Configuration -->
+                    <div class="form-group">
+                        <label for="client">Client:</label>
+                        <select id="client" name="client">
+                            <option value="ollama">Ollama (Local)</option>
+                            <option value="openai_api">OpenAI API</option>
+                        </select>
+                    </div>
+
+                    <!-- Client-specific settings -->
+                    <div id="ollamaSettings">
+                        <div class="form-group">
+                            <label for="ollama-url">Ollama URL:</label>
+                            <input type="text" id="ollama-url" name="ollama-url" value="http://localhost:11434">
+                        </div>
+                    </div>
+
+                    <div id="openaiSettings" style="display: none;">
+                        <div class="form-group">
+                            <label for="api-key">API Key: *</label>
+                            <input type="password" id="api-key" name="api-key">
+                        </div>
+                        <div class="form-group">
+                            <label for="api-url">API URL: *</label>
+                            <input type="text" id="api-url" name="api-url" placeholder="https://openrouter.ai/api/v1">
+                        </div>
+                    </div>
+
+                    <!-- Model Configuration -->
+                    <div class="form-group">
+                        <label for="model">Vision Model:</label>
+                        <input type="text" id="model" name="model" placeholder="llama3.2-vision">
+                    </div>
+
+                    <!-- Processing Options -->
+                    <div class="form-group">
+                        <label for="duration">Duration (seconds):</label>
+                        <input type="number" id="duration" name="duration" min="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="max-frames">Max Frames:</label>
+                        <input type="number" id="max-frames" name="max-frames" min="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="whisper-model">Whisper Model:</label>
+                        <select id="whisper-model" name="whisper-model">
+                            <option value="tiny">Tiny</option>
+                            <option value="base">Base</option>
+                            <option value="small">Small</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="large">Large</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="language">Language:</label>
+                        <input type="text" id="language" name="language" placeholder="Auto-detect">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="device">Device:</label>
+                        <select id="device" name="device">
+                            <option value="cpu">CPU</option>
+                            <option value="cuda">CUDA (GPU)</option>
+                            <option value="mps">MPS (Apple Silicon)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="prompt">Analysis Prompt:</label>
+                        <textarea id="prompt" name="prompt" placeholder="What would you like to know about the video?"></textarea>
+                    </div>
+
+                    <div class="form-group checkbox">
+                        <input type="checkbox" id="keep-frames" name="keep-frames">
+                        <label for="keep-frames">Keep Extracted Frames</label>
+                    </div>
+
+                    <!-- Command Preview -->
+                    <div class="command-preview">
+                        <h3>Command Preview</h3>
+                        <pre id="commandPreview"></pre>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="primary-button">Start Analysis</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Output Section -->
+            <section class="output-section" id="outputSection" style="display: none;">
+                <h2>Analysis Output</h2>
+                <div class="output-container">
+                    <pre id="outputText"></pre>
+                </div>
+                <div class="output-actions" style="display: none;">
+                    <button id="downloadResults" class="secondary-button">Download Results</button>
+                    <button id="newAnalysis" class="primary-button">New Analysis</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
