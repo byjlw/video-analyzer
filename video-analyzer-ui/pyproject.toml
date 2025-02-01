@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "video-analyzer-ui"
+version = "0.1.0"
+authors = [
+    { name="Jesse White", email="your.email@example.com" },
+]
+description = "Web interface for the video-analyzer tool"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Environment :: Web Environment",
+    "Framework :: Flask",
+]
+dependencies = [
+    "flask>=3.0.0",
+    "video-analyzer>=0.1.0",
+    "werkzeug>=3.0.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/username/video-analyzer-ui"
+"Bug Tracker" = "https://github.com/username/video-analyzer-ui/issues"
+
+[project.scripts]
+video-analyzer-ui = "video_analyzer_ui.server:main"

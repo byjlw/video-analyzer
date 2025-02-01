@@ -1,0 +1,4 @@
+include README.md
+include requirements.txt
+recursive-include video_analyzer_ui/templates *
+recursive-include video_analyzer_ui/static *
