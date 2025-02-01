@@ -141,10 +141,9 @@ def main():
             )
             frames = processor.extract_keyframes(
                 frames_per_minute=config.get("frames", {}).get("per_minute", 60),
-                duration=config.get("duration")
+                duration=config.get("duration"),
+                max_frames=args.max_frames
             )
-            # Limit frames if max_frames specified
-            frames = frames[:args.max_frames]
             
         # Stage 2: Frame Analysis
         if args.start_stage <= 2:

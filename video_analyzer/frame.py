@@ -44,7 +44,7 @@ class VideoProcessor:
         score = self._calculate_frame_difference(current_frame, prev_frame)
         return score > threshold
 
-    def extract_keyframes(self, frames_per_minute: int = 10, duration: Optional[float] = None) -> List[Frame]:
+    def extract_keyframes(self, frames_per_minute: int = 10, duration: Optional[float] = None, max_frames: Optional[int] = None) -> List[Frame]:
         """Extract keyframes from video targeting a specific number of frames per minute."""
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
@@ -60,8 +60,10 @@ class VideoProcessor:
             video_duration = min(duration, video_duration)
             total_frames = int(min(total_frames, duration * fps))
         
-        # Calculate target number of frames
+        # Calculate target number of frames, respecting max_frames if specified
         target_frames = int((video_duration / 60) * frames_per_minute)
+        if max_frames is not None:
+            target_frames = min(target_frames, max_frames)
         target_frames = max(1, min(target_frames, total_frames))
         
         # Calculate adaptive sampling interval
@@ -91,9 +93,16 @@ class VideoProcessor:
         selected_candidates = frame_candidates[:target_frames]
         selected_candidates.sort(key=lambda x: x[0])  # Sort by frame number
         
-        # Save selected frames
+        # If max_frames is specified, sample evenly across the candidates
+        if max_frames is not None and max_frames < len(selected_candidates):
+            step = len(selected_candidates) / max_frames
+            indices = [int(i * step) for i in range(max_frames)]
+            selected_frames = [selected_candidates[i] for i in indices]
+        else:
+            selected_frames = selected_candidates
+
         self.frames = []
-        for idx, (frame_num, frame, score) in enumerate(selected_candidates):
+        for idx, (frame_num, frame, score) in enumerate(selected_frames):
             frame_path = self.output_dir / f"frame_{idx}.jpg"
             cv2.imwrite(str(frame_path), frame)
             timestamp = frame_num / fps

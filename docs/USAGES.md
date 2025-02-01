@@ -37,7 +37,7 @@ video-analyzer path/to/video.mp4 --client openai_api --api-key your-key --api-ur
 | `--keep-frames` | Keep extracted frames after analysis | False | `--keep-frames` |
 | `--whisper-model` | Whisper model size or model path | medium | `--whisper-model large` |
 | `--start-stage` | Stage to start processing from (1-3) | 1 | `--start-stage 2` |
-| `--max-frames` | Maximum number of frames to process | sys.maxsize | `--max-frames 100` |
+| `--max-frames` | Maximum number of frames to process. When specified, frames are sampled evenly across the video duration rather than just taking the first N frames. | sys.maxsize | `--max-frames 100` |
 | `--log-level` | Set logging level | INFO | `--log-level DEBUG` |
 | `--prompt` | Question to ask about the video | "" | `--prompt "What activities are shown?"` |
 | `--language` | Set language for transcription | None (auto-detect) | `--language en` |
@@ -158,6 +158,14 @@ video-analyzer video.mp4 \
     --max-frames 50 \
     --keep-frames
 ```
+
+### Analyze Video with Evenly Sampled Frames
+```bash
+video-analyzer video.mp4 \
+    --max-frames 5 \
+    --keep-frames
+```
+This will extract frames evenly spaced across the video duration. For example, in a 5-minute video, it would sample approximately one frame per minute rather than taking the first 5 frames.
 
 ### Specific Language Processing
 ```bash
