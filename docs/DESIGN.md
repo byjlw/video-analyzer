@@ -8,6 +8,35 @@
    - Saves frames as JPEGs for LLM analysis
    - Adaptive sampling based on video length and target frames per minute
 
+   ### Frame Selection Algorithm
+   1. Target Frame Calculation
+      - Calculates target frames based on video duration and frames_per_minute
+      - Respects optional max_frames limit
+      - Ensures at least 1 frame and no more than total video frames
+
+   2. Adaptive Sampling
+      - Uses sampling interval = total_frames / (target_frames * 2)
+      - Reduces processing load while maintaining coverage
+      - Samples more frequently than target to ensure enough candidates
+
+   3. Frame Difference Analysis
+      - Converts frames to grayscale for efficient comparison
+      - Uses OpenCV's absdiff to calculate absolute difference
+      - Compares against FRAME_DIFFERENCE_THRESHOLD (default 10.0)
+      - Stores frame number, image data, and difference score
+
+   4. Final Selection Process
+      - Selects frames with highest difference scores
+      - Takes top N frames based on target frame count
+      - If max_frames specified, samples evenly across selected frames
+      - Ensures most significant changes are captured
+
+   ### Limitations
+   - Frames between sampling intervals may be missed
+   - Rapid sequences may only have one frame selected
+   - High-scoring frames may be excluded if outranked by others
+   - Even sampling with max_frames may skip some significant changes
+
 2. Audio Processing
    - Extracts audio using FFmpeg
    - Uses Whisper for transcription

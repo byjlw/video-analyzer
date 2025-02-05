@@ -15,6 +15,9 @@ class Frame:
     score: float
 
 class VideoProcessor:
+    # Class constants
+    FRAME_DIFFERENCE_THRESHOLD = 10.0
+    
     def __init__(self, video_path: Path, output_dir: Path, model: str):
         self.video_path = video_path
         self.output_dir = output_dir
@@ -36,7 +39,7 @@ class VideoProcessor:
         
         return float(score)
 
-    def _is_keyframe(self, current_frame: np.ndarray, prev_frame: np.ndarray, threshold: float = 10.0) -> bool:
+    def _is_keyframe(self, current_frame: np.ndarray, prev_frame: np.ndarray, threshold: float = FRAME_DIFFERENCE_THRESHOLD) -> bool:
         """Determine if frame is significantly different from previous frame."""
         if prev_frame is None:
             return True
@@ -60,11 +63,12 @@ class VideoProcessor:
             video_duration = min(duration, video_duration)
             total_frames = int(min(total_frames, duration * fps))
         
-        # Calculate target number of frames, respecting max_frames if specified
-        target_frames = int((video_duration / 60) * frames_per_minute)
-        if max_frames is not None:
-            target_frames = min(target_frames, max_frames)
-        target_frames = max(1, min(target_frames, total_frames))
+        # Calculate target number of frames
+        target_frames = max(1, min(
+            int((video_duration / 60) * frames_per_minute),
+            total_frames,
+            max_frames if max_frames is not None else float('inf')
+        ))
         
         # Calculate adaptive sampling interval
         sample_interval = max(1, total_frames // (target_frames * 2))
@@ -79,8 +83,8 @@ class VideoProcessor:
                 break
                 
             if frame_count % sample_interval == 0:
-                if self._is_keyframe(frame, prev_frame):
-                    score = self._calculate_frame_difference(frame, prev_frame)
+                score = self._calculate_frame_difference(frame, prev_frame)
+                if score > self.FRAME_DIFFERENCE_THRESHOLD:
                     frame_candidates.append((frame_count, frame, score))
                 prev_frame = frame.copy()
                 
@@ -89,15 +93,12 @@ class VideoProcessor:
         cap.release()
         
         # Select the most significant frames
-        frame_candidates.sort(key=lambda x: x[2], reverse=True)
-        selected_candidates = frame_candidates[:target_frames]
-        selected_candidates.sort(key=lambda x: x[0])  # Sort by frame number
+        selected_candidates = sorted(frame_candidates, key=lambda x: x[2], reverse=True)[:target_frames]
         
         # If max_frames is specified, sample evenly across the candidates
         if max_frames is not None and max_frames < len(selected_candidates):
             step = len(selected_candidates) / max_frames
-            indices = [int(i * step) for i in range(max_frames)]
-            selected_frames = [selected_candidates[i] for i in indices]
+            selected_frames = [selected_candidates[int(i * step)] for i in range(max_frames)]
         else:
             selected_frames = selected_candidates
 
