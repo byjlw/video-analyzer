@@ -98,3 +98,22 @@ class PromptLoader:
         except Exception as e:
             logger.error(f"Error loading prompt '{name}': {e}")
             raise
+
+    def list_prompt_locations(self) -> List[Dict[str, str]]:
+        """List all prompt file locations.
+        
+        Returns:
+            A list of dictionaries containing prompt name and file path
+        """
+        prompt_locations = []
+        for prompt in self.prompts:
+            try:
+                path = self._find_prompt_file(prompt["path"])
+                prompt_locations.append({
+                    "name": prompt["name"],
+                    "path": str(path)
+                })
+            except Exception as e:
+                logger.warning(f"Could not locate prompt '{prompt['name']}': {e}")
+        
+        return prompt_locations

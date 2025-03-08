@@ -1,5 +1,25 @@
 # Video Analyzer Design
 ![Design](design.png)
+## CLI Architecture
+
+The CLI system is organized into two main components:
+
+1. Command Routing (cli.py)
+   - Handles command-line argument parsing
+   - Routes commands to appropriate handlers
+   - Maintains backward compatibility
+   - Provides logging setup and configuration
+
+2. Command Implementation (commands.py)
+   - Implements individual command handlers
+   - Contains core business logic
+   - Manages resource cleanup
+   - Handles client creation and configuration
+
+Available Commands:
+- `video-analyzer <video_path>`: Analyze a video (default command)
+- `video-analyzer show-prompts`: Display prompt file locations
+
 ## Core Workflow
 
 1. Frame Extraction
@@ -209,9 +229,15 @@ The system prioritizes user-specified prompts over package prompts, enabling cus
    - Inherit from LLMClient
    - Implement correct image format for API
    - Add client config to default_config.json
-   - Update create_client() in video_analyzer.py
+   - Update create_client() in commands.py
 
-2. Custom Analysis
+2. New CLI Commands
+   - Add command handler to commands.py
+   - Update command routing in cli.py
+   - Add documentation to USAGES.md
+   - Update this design document
+
+3. Custom Analysis
    - Add new prompt template
    - Update VideoAnalyzer methods
    - Modify output format in results

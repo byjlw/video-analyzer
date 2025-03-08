@@ -227,3 +227,29 @@ video-analyzer video.mp4 \
     --whisper-model /path/to/whisper/model \
     --device cuda \
     --start-stage 1
+
+### Show Prompt Locations
+
+To view the locations of all prompt files used by the tool:
+
+```bash
+video-analyzer show-prompts
+```
+
+This command displays the name and file path of each prompt configured in the system. You can optionally specify a custom configuration directory:
+
+```bash
+video-analyzer show-prompts --config /path/to/config/
+```
+
+Example output:
+```
+Prompt File Locations:
+=====================
+
+Frame Analysis:
+  /Users/username/video-analyzer/video_analyzer/prompts/frame_analysis/frame_analysis.txt
+
+Video Reconstruction:
+  /Users/username/video-analyzer/video_analyzer/prompts/frame_analysis/describe.txt
+```
