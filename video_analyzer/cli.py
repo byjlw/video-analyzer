@@ -80,6 +80,7 @@ def main():
                         help="Question to ask about the video")
     parser.add_argument("--language", type=str, default=None)
     parser.add_argument("--device", type=str, default="cpu")
+    parser.add_argument("--temperature", type=float, help="Temperature for LLM generation")
     args = parser.parse_args()
 
     # Set up logging with specified level
@@ -148,7 +149,13 @@ def main():
         # Stage 2: Frame Analysis
         if args.start_stage <= 2:
             logger.info("Analyzing frames...")
-            analyzer = VideoAnalyzer(client, model, prompt_loader, config.get("prompt", ""))
+            analyzer = VideoAnalyzer(
+                client, 
+                model, 
+                prompt_loader,
+                config.get("clients", {}).get("temperature", 0.2),
+                config.get("prompt", "")
+            )
             frame_analyses = []
             for frame in frames:
                 analysis = analyzer.analyze_frame(frame)

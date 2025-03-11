@@ -42,6 +42,7 @@ video-analyzer path/to/video.mp4 --client openai_api --api-key your-key --api-ur
 | `--prompt` | Question to ask about the video | "" | `--prompt "What activities are shown?"` |
 | `--language` | Set language for transcription | None (auto-detect) | `--language en` |
 | `--device` | Select device for Whisper model | cpu | `--device cuda` |
+| `--temperature` | Temperature for LLM generation | 0.2 | `--temperature 0.2` |
 
 ### Processing Stages
 The `--start-stage` argument allows you to begin processing from a specific stage:
@@ -62,6 +63,7 @@ The tool uses a cascading configuration system with the following priority:
 {
   "clients": {
     "default": "ollama",
+    "temperature": 0.2,
     "ollama": {
       "url": "http://localhost:11434",
       "model": "llama3.2-vision"
@@ -102,6 +104,7 @@ The tool uses a cascading configuration system with the following priority:
 
 #### Client Settings
 - `clients.default`: Default LLM client (ollama/openai_api)
+- `clients.temperature`: Temperature for LLM generation (0.0-1.0, higher values = more creative)
 - `clients.ollama.url`: Ollama service URL
 - `clients.ollama.model`: Vision model for Ollama
 - `clients.openai_api.api_key`: API key for OpenAI-compatible services

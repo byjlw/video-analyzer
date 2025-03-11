@@ -8,7 +8,7 @@ from .audio_processor import AudioTranscript
 logger = logging.getLogger(__name__)
 
 class VideoAnalyzer:
-    def __init__(self, client: LLMClient, model: str, prompt_loader: PromptLoader, user_prompt: str = ""):
+    def __init__(self, client: LLMClient, model: str, prompt_loader: PromptLoader, temperature: float, user_prompt: str = ""):
         """Initialize the VideoAnalyzer.
         
         Args:
@@ -21,6 +21,7 @@ class VideoAnalyzer:
         self.client = client
         self.model = model
         self.prompt_loader = prompt_loader
+        self.temperature = temperature
         self.user_prompt = user_prompt  # Store user's question about the video
         self._load_prompts()
         self.previous_analyses = []
@@ -64,6 +65,7 @@ class VideoAnalyzer:
                 prompt=prompt,
                 image_path=str(frame.path),
                 model=self.model,
+                temperature=self.temperature,
                 num_predict=300
             )
             logger.debug(f"Successfully analyzed frame {frame.number}")
@@ -112,6 +114,7 @@ class VideoAnalyzer:
             response = self.client.generate(
                 prompt=prompt,
                 model=self.model,
+                temperature=self.temperature,
                 num_predict=1000
             )
             logger.info("Successfully reconstructed video description")

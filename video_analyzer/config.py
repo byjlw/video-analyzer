@@ -84,6 +84,8 @@ class Config:
                         self.config["audio"]["language"] = value
                 elif key == "device":
                     self.config["audio"]["device"] = value
+                elif key == "temperature":
+                    self.config["clients"]["temperature"] = value
                 elif key not in ["start_stage", "max_frames"]:  # Ignore these as they're command-line only
                     self.config[key] = value
 

@@ -1,6 +1,7 @@
 {
     "clients": {
         "default": "ollama",
+        "temperature": 0.0,
         "ollama": {
             "url": "http://localhost:11434",
             "model": "llama3.2-vision"
