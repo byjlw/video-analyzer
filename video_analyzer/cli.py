@@ -193,20 +193,20 @@ def main():
         with open(output_dir / "analysis.json", "w") as f:
             json.dump(results, f, indent=2)
             
-        logger.info(f"Analysis complete. Results saved to {output_dir / 'analysis.json'}")
-        
-        print("\nTranscript:")
+        logger.info("\nTranscript:")
         if transcript:
-            print(transcript.text)
+            logger.info(transcript.text)
         else:
-            print("No reliable transcript available")
+            logger.info("No reliable transcript available")
             
         if video_description:
-            print("\nVideo Description:")
-            print(video_description.get("response", "No description generated"))
+            logger.info("\nVideo Description:")
+            logger.info(video_description.get("response", "No description generated"))
         
         if not config.get("keep_frames"):
             cleanup_files(output_dir)
+        
+        logger.info(f"Analysis complete. Results saved to {output_dir / 'analysis.json'}")
             
     except Exception as e:
         logger.error(f"Error during video analysis: {e}")
