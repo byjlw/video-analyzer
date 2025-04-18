@@ -123,7 +123,11 @@ def main():
                                              device=config.get("audio", {}).get("device", "cpu"))
             
             logger.info("Extracting audio from video...")
-            audio_path = audio_processor.extract_audio(video_path, output_dir)
+            try:
+                audio_path = audio_processor.extract_audio(video_path, output_dir)
+            except Exception as e:
+                logger.error(f"Error extracting audio: {e}")
+                audio_path = None
             
             if audio_path is None:
                 logger.debug("No audio found in video - skipping transcription")
