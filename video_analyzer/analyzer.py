@@ -8,7 +8,7 @@ from .audio_processor import AudioTranscript
 logger = logging.getLogger(__name__)
 
 class VideoAnalyzer:
-    def __init__(self, client: LLMClient, model: str, prompt_loader: PromptLoader, temperature: float, user_prompt: str = ""):
+    def __init__(self, client: LLMClient, model: str, prompt_loader: PromptLoader, temperature: float, user_prompt: str = "", strict_vision: bool = False):
         """Initialize the VideoAnalyzer.
         
         Args:
@@ -23,6 +23,7 @@ class VideoAnalyzer:
         self.prompt_loader = prompt_loader
         self.temperature = temperature
         self.user_prompt = user_prompt  # Store user's question about the video
+        self.strict_vision = strict_vision
         self._load_prompts()
         self.previous_analyses = []
         
@@ -58,9 +59,17 @@ class VideoAnalyzer:
         # Replace tokens in the prompt template
         prompt = self.frame_prompt.replace("{PREVIOUS_FRAMES}", self._format_previous_analyses())
         prompt = prompt.replace("{prompt}", self._format_user_prompt())
+        if self.strict_vision:
+            guard = (
+                "You must only describe details that are clearly visible in the image. "
+                "Do not infer or guess beyond the pixels. If any element is unclear or not visible, write 'Unknown'. "
+                "Avoid narrative embellishment and world knowledge."
+            )
+            prompt = f"{guard}\n\n{prompt}"
         prompt = f"{prompt}\nThis is frame {frame.number} captured at {frame.timestamp:.2f} seconds."
         
         try:
+            logger.debug(f"Sending frame image for analysis: {frame.path}")
             response = self.client.generate(
                 prompt=prompt,
                 image_path=str(frame.path),
@@ -69,6 +78,12 @@ class VideoAnalyzer:
                 num_predict=300
             )
             logger.debug(f"Successfully analyzed frame {frame.number}")
+            # Log a concise preview of the model's response for this frame
+            try:
+                preview = str(response.get('response', ''))[:300]
+                logger.info(f"Frame {frame.number} analysis preview: {preview}")
+            except Exception:
+                pass
             
             # Store the analysis for future frames
             analysis_result = {k: v for k, v in response.items() if k != "context"}
@@ -84,6 +99,10 @@ class VideoAnalyzer:
     def reconstruct_video(self, frame_analyses: List[Dict[str, Any]], frames: List[Frame], 
                          transcript: Optional[AudioTranscript] = None) -> Dict[str, Any]:
         """Reconstruct video description from frame analyses and transcript."""
+        logger.debug(
+            f"Starting reconstruction with {len(frame_analyses)} analyses; "
+            f"transcript present: {bool(transcript and getattr(transcript, 'text', '').strip())}"
+        )
         frame_notes = []
         for i, (frame, analysis) in enumerate(zip(frames, frame_analyses)):
             frame_note = (
@@ -118,6 +137,11 @@ class VideoAnalyzer:
                 num_predict=1000
             )
             logger.info("Successfully reconstructed video description")
+            try:
+                recon_preview = str(response.get('response', ''))[:400]
+                logger.info(f"Reconstruction preview: {recon_preview}")
+            except Exception:
+                pass
             return {k: v for k, v in response.items() if k != "context"}
         except Exception as e:
             logger.error(f"Error reconstructing video: {e}")

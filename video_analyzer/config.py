@@ -61,21 +61,21 @@ class Config:
         for key, value in vars(args).items():
             if value is not None:  # Only update if argument was provided
                 if key == "client":
-                    self.config["clients"]["default"] = value
+                    self.config["clients"]["default"] = str(value).strip()
                 elif key == "ollama_url":
-                    self.config["clients"]["ollama"]["url"] = value
+                    self.config["clients"]["ollama"]["url"] = str(value).strip()
                 elif key == "api_key":
                     self.config["clients"]["openai_api"]["api_key"] = value
                     # If key is provided but no client specified, use OpenAI API
                     if not args.client:
                         self.config["clients"]["default"] = "openai_api"
                 elif key == "api_url":
-                    self.config["clients"]["openai_api"]["api_url"] = value
+                    self.config["clients"]["openai_api"]["api_url"] = str(value).strip()
                 elif key == "model":
                     client = self.config["clients"]["default"]
-                    self.config["clients"][client]["model"] = value
+                    self.config["clients"][client]["model"] = str(value).strip()
                 elif key == "prompt":
-                    self.config["prompt"] = value
+                    self.config["prompt"] = value if value is None else str(value)
                 #overide audio config
                 elif key == "whisper_model":
                     self.config["audio"]["whisper_model"] = value  # default is 'medium'
@@ -86,6 +86,8 @@ class Config:
                     self.config["audio"]["device"] = value
                 elif key == "temperature":
                     self.config["clients"]["temperature"] = value
+                elif key == "strict_vision":
+                    self.config["strict_vision"] = bool(value)
                 elif key not in ["start_stage", "max_frames"]:  # Ignore these as they're command-line only
                     self.config[key] = value
 

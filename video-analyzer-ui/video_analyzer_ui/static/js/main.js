@@ -15,6 +15,12 @@ const newAnalysis = document.getElementById('newAnalysis');
 const clientSelect = document.getElementById('client');
 const ollamaSettings = document.getElementById('ollamaSettings');
 const openaiSettings = document.getElementById('openaiSettings');
+const debugLogsCheckbox = document.getElementById('debug-logs');
+const modelInput = document.getElementById('model');
+const ollamaUrlInput = document.getElementById('ollama-url');
+const apiUrlInput = document.getElementById('api-url');
+const languageInput = document.getElementById('language');
+const strictVisionCheckbox = document.getElementById('strict-vision');
 
 // Event Listeners
 dropZone.addEventListener('click', () => fileInput.click());
@@ -89,8 +95,27 @@ async function handleFile(file) {
 async function handleAnalysis(e) {
     e.preventDefault();
     if (!currentSession) return;
-    
+
+    // Trim key text inputs to avoid trailing spaces breaking model routing
+    if (modelInput) modelInput.value = modelInput.value.trim();
+    if (ollamaUrlInput) ollamaUrlInput.value = ollamaUrlInput.value.trim();
+    if (apiUrlInput) apiUrlInput.value = apiUrlInput.value.trim();
+    if (languageInput) languageInput.value = languageInput.value.trim();
+
     const formData = new FormData(analysisForm);
+    // Map debug-logs checkbox to --log-level DEBUG for CLI
+    if (debugLogsCheckbox && debugLogsCheckbox.checked) {
+        formData.delete('debug-logs');
+        formData.set('log-level', 'DEBUG');
+    } else {
+        formData.delete('debug-logs');
+    }
+    // Map strict-vision checkbox to a flag argument
+    if (strictVisionCheckbox && strictVisionCheckbox.checked) {
+        formData.set('strict-vision', '');
+    } else {
+        formData.delete('strict-vision');
+    }
     showOutputSection();
     
     // Close any existing event source
@@ -133,8 +158,20 @@ async function handleAnalysis(e) {
             loadingDiv.remove();
         }
         
+        const container = outputText.parentElement;
+        // Determine if user is already at (or near) bottom before appending
+        let wasAtBottom = false;
+        if (container) {
+            const threshold = 24; // px tolerance
+            wasAtBottom = (container.scrollTop + container.clientHeight) >= (container.scrollHeight - threshold);
+        }
+
         outputText.textContent += event.data + '\n';
-        outputText.scrollTop = outputText.scrollHeight;
+
+        // Only auto-scroll if we were at the bottom beforehand
+        if (container && wasAtBottom) {
+            container.scrollTop = container.scrollHeight;
+        }
         
         if (event.data.includes('Analysis completed successfully')) {
             outputEventSource.close();
@@ -191,9 +228,28 @@ function toggleClientSettings() {
 }
 
 function updateCommandPreview() {
+    // Keep preview in sync with trimmed values
+    if (modelInput) modelInput.value = modelInput.value.trim();
+    if (ollamaUrlInput) ollamaUrlInput.value = ollamaUrlInput.value.trim();
+    if (apiUrlInput) apiUrlInput.value = apiUrlInput.value.trim();
+    if (languageInput) languageInput.value = languageInput.value.trim();
+
     const formData = new FormData(analysisForm);
+    if (strictVisionCheckbox && strictVisionCheckbox.checked) {
+        formData.set('strict-vision', '');
+    } else {
+        formData.delete('strict-vision');
+    }
     let command = 'video-analyzer <video_path>';
     
+    // Reflect debug logs choice as --log-level DEBUG
+    if (debugLogsCheckbox && debugLogsCheckbox.checked) {
+        formData.set('log-level', 'DEBUG');
+        formData.delete('debug-logs');
+    } else {
+        formData.delete('debug-logs');
+    }
+
     for (const [key, value] of formData.entries()) {
         if (value) {
             if (key === 'keep-frames') {

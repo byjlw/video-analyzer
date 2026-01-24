@@ -48,5 +48,6 @@
         "device": "cpu"
     },
     "keep_frames": false,
-    "prompt": ""
+    "prompt": "",
+    "strict_vision": false
 }

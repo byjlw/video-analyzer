@@ -81,6 +81,7 @@ def main():
     parser.add_argument("--language", type=str, default=None)
     parser.add_argument("--device", type=str, default="cpu")
     parser.add_argument("--temperature", type=float, help="Temperature for LLM generation")
+    parser.add_argument("--strict-vision", action="store_true", help="Reduce hallucinations: describe only visible details; use 'Unknown' when unsure")
     args = parser.parse_args()
 
     # Set up logging with specified level
@@ -158,7 +159,8 @@ def main():
                 model, 
                 prompt_loader,
                 config.get("clients", {}).get("temperature", 0.2),
-                config.get("prompt", "")
+                config.get("prompt", ""),
+                strict_vision=config.get("strict_vision", False)
             )
             frame_analyses = []
             for frame in frames:

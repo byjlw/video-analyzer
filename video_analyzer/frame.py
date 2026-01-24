@@ -108,6 +108,12 @@ class VideoProcessor:
             cv2.imwrite(str(frame_path), frame)
             timestamp = frame_num / fps
             self.frames.append(Frame(idx, frame_path, timestamp, score))
+            try:
+                h, w = frame.shape[:2]
+                size_bytes = frame_path.stat().st_size if frame_path.exists() else 0
+                logger.debug(f"Saved frame {idx} at {frame_path} ({w}x{h}, {size_bytes} bytes, score={score:.2f}, ts={timestamp:.2f}s)")
+            except Exception:
+                pass
         
         logger.info(f"Extracted {len(self.frames)} frames from video (target was {target_frames})")
         return self.frames
