@@ -79,18 +79,14 @@ def write_prompt_files(instructions: dict, output_dir: Path) -> None:
 
     frame_analysis_path = output_dir / "frame_analysis_tuned.txt"
     frame_analysis_path.write_text(
-        _FRAME_ANALYSIS_TEMPLATE.format(
-            instruction=instructions["frame_analysis_instruction"]
-        ),
+        _FRAME_ANALYSIS_TEMPLATE.replace("{instruction}", instructions["frame_analysis_instruction"]),
         encoding="utf-8",
     )
     logger.info(f"Wrote frame analysis prompt: {frame_analysis_path}")
 
     describe_path = output_dir / "describe_tuned.txt"
     describe_path.write_text(
-        _DESCRIBE_TEMPLATE.format(
-            instruction=instructions["reconstruction_instruction"]
-        ),
+        _DESCRIBE_TEMPLATE.replace("{instruction}", instructions["reconstruction_instruction"]),
         encoding="utf-8",
     )
     logger.info(f"Wrote reconstruction prompt: {describe_path}")
