@@ -107,25 +107,39 @@ def _load_example(output_dir: Path) -> TrainingExample:
 
 
 def load_training_data(training_data_path: str) -> List[TrainingExample]:
-    """Load all training examples from a training_data.json file.
+    """Load training examples from a path, which can be any of:
 
-    Each example points to an output directory containing an analysis.json
-    that has been edited to reflect ideal outputs.
+    - A directory containing analysis.json (e.g. ``output/``)
+    - An analysis.json file directly (e.g. ``output/analysis.json``)
+    - A training_data.json wrapper pointing at multiple output dirs
 
     Args:
-        training_data_path: Path to training_data.json
+        training_data_path: Path to a directory, analysis.json, or training_data.json
 
     Returns:
         List of TrainingExample objects
 
     Raises:
-        ValueError: If training data is invalid or required fields are missing
+        ValueError: If the path is invalid or required fields are missing
     """
-    training_data_path = Path(training_data_path)
-    if not training_data_path.exists():
-        raise ValueError(f"Training data file not found: {training_data_path}")
+    path = Path(training_data_path)
+    if not path.exists():
+        raise ValueError(f"Path not found: {path}")
 
-    with open(training_data_path, "r", encoding="utf-8") as f:
+    # Directory → treat it as a single output_dir
+    if path.is_dir():
+        example = _load_example(path)
+        _log_example(example, path)
+        return [example]
+
+    # analysis.json pointed to directly → load its parent as output_dir
+    if path.name == "analysis.json":
+        example = _load_example(path.parent)
+        _log_example(example, path.parent)
+        return [example]
+
+    # Otherwise assume it's a training_data.json wrapper
+    with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     examples_config = data.get("examples")
@@ -135,7 +149,7 @@ def load_training_data(training_data_path: str) -> List[TrainingExample]:
             'Example: {"examples": [{"output_dir": "output"}]}'
         )
 
-    base_dir = training_data_path.parent
+    base_dir = path.parent
     examples = []
 
     for i, entry in enumerate(examples_config):
@@ -152,11 +166,15 @@ def load_training_data(training_data_path: str) -> List[TrainingExample]:
         try:
             example = _load_example(output_dir)
             examples.append(example)
-            frame_note_status = "with ideal frame notes" if example.has_ideal_frame_notes else "without ideal frame notes"
-            logger.info(f"Loaded example from {output_dir} ({frame_note_status})")
+            _log_example(example, output_dir)
         except ValueError:
             raise
         except Exception as e:
             raise ValueError(f"Error loading example from {output_dir}: {e}") from e
 
     return examples
+
+
+def _log_example(example: TrainingExample, path: Path) -> None:
+    status = "with ideal frame notes" if example.has_ideal_frame_notes else "without ideal frame notes"
+    logger.info(f"Loaded example from {path} ({status})")

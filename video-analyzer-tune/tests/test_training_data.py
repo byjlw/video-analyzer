@@ -211,9 +211,35 @@ def test_empty_examples_list_raises(tmp_path):
         load_training_data(str(td_path))
 
 
-def test_nonexistent_training_data_file_raises():
+def test_nonexistent_path_raises():
     with pytest.raises(ValueError, match="not found"):
         load_training_data("/nonexistent/path/training_data.json")
+
+
+# --- Direct path inputs ---
+
+def test_load_from_output_directory_directly(output_dir):
+    """Point at the output dir itself, no training_data.json needed."""
+    examples = load_training_data(str(output_dir))
+    assert len(examples) == 1
+    assert examples[0].ideal_description != ""
+
+
+def test_load_from_analysis_json_directly(output_dir):
+    """Point at analysis.json directly."""
+    examples = load_training_data(str(output_dir / "analysis.json"))
+    assert len(examples) == 1
+    assert examples[0].ideal_description != ""
+
+
+def test_load_from_directory_and_wrapper_produce_same_result(output_dir, training_data_file):
+    """All three input forms load the same data."""
+    from_dir = load_training_data(str(output_dir))
+    from_file = load_training_data(str(output_dir / "analysis.json"))
+    from_wrapper = load_training_data(str(training_data_file))
+
+    assert from_dir[0].ideal_description == from_file[0].ideal_description == from_wrapper[0].ideal_description
+    assert len(from_dir[0].frames) == len(from_file[0].frames) == len(from_wrapper[0].frames)
 
 
 def test_missing_output_dir_field_raises(tmp_path):
