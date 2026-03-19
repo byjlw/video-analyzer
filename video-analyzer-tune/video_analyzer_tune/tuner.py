@@ -136,6 +136,7 @@ class PromptTuner:
 
         optimizer = MIPROv2(
             metric=metric,
+            auto=None,
             num_candidates=self.num_candidates,
             max_bootstrapped_demos=self.max_bootstrapped_demos,
             max_labeled_demos=self.max_labeled_demos,
