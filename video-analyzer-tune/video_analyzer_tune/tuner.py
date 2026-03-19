@@ -4,6 +4,7 @@ import logging
 from typing import List, Dict, Any, Tuple
 
 import dspy
+from dspy.evaluate import Evaluate
 from dspy.teleprompt import MIPROv2
 
 from .training_data import TrainingExample
@@ -134,6 +135,18 @@ class PromptTuner:
             f"{self.num_candidates} candidates, {self.num_trials} trials"
         )
 
+        evaluator = Evaluate(
+            devset=valset,
+            metric=metric,
+            num_threads=1,
+            display_progress=False,
+            display_table=False,
+        )
+
+        logger.info("Evaluating baseline (unoptimized) prompts...")
+        baseline_score = evaluator(pipeline)
+        logger.info(f"Baseline score: {baseline_score:.1f}%")
+
         optimizer = MIPROv2(
             metric=metric,
             auto=None,
@@ -151,5 +164,16 @@ class PromptTuner:
             minibatch=False,
         )
 
-        logger.info("Optimization complete")
+        logger.info("Evaluating optimized prompts...")
+        optimized_score = evaluator(optimized_pipeline)
+
+        improvement = optimized_score - baseline_score
+        logger.info("")
+        logger.info("=" * 40)
+        logger.info(f"  Baseline score:  {baseline_score:.1f}%")
+        logger.info(f"  Optimized score: {optimized_score:.1f}%")
+        logger.info(f"  Improvement:     {improvement:+.1f}%")
+        logger.info("=" * 40)
+        logger.info("")
+
         return optimized_pipeline
