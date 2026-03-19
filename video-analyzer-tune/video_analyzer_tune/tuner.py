@@ -148,6 +148,7 @@ class PromptTuner:
             trainset=trainset,
             valset=valset,
             num_trials=self.num_trials,
+            minibatch=False,
         )
 
         logger.info("Optimization complete")
