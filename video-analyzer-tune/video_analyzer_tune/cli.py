@@ -46,9 +46,9 @@ def main():
     parser.add_argument(
         "--client",
         type=str,
-        default="ollama",
+        default=None,
         choices=["ollama", "openai_api"],
-        help="LLM client to use for optimization runs (default: ollama)",
+        help="LLM client to use for optimization runs (default: ollama, or openai_api if --api-key is provided)",
     )
     parser.add_argument(
         "--model",
@@ -140,13 +140,20 @@ def main():
     )
     logger.setLevel(log_level)
 
+    # Infer client type from flags, matching video-analyzer behaviour:
+    # if --api-key is provided without --client, assume openai_api
+    if args.client is None:
+        client = "openai_api" if args.api_key else "ollama"
+    else:
+        client = args.client
+
     # Validate openai_api args before doing any work
-    if args.client == "openai_api":
+    if client == "openai_api":
         if not args.api_key:
-            logger.error("--api-key is required when --client is openai_api")
+            logger.error("--api-key is required when using an OpenAI-compatible API")
             sys.exit(1)
         if not args.api_url:
-            logger.error("--api-url is required when --client is openai_api")
+            logger.error("--api-url is required when using an OpenAI-compatible API")
             sys.exit(1)
 
     if not 0.0 <= args.description_weight <= 1.0:
@@ -164,9 +171,9 @@ def main():
 
         # Build LM config from CLI args
         lm_config = {
-            "type": args.client,
+            "type": client,
             "model": args.model,
-            "api_base": args.ollama_url if args.client == "ollama" else args.api_url,
+            "api_base": args.ollama_url if client == "ollama" else args.api_url,
             "api_key": args.api_key,
         }
 

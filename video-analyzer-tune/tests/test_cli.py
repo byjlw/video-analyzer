@@ -43,6 +43,21 @@ def test_missing_api_url_for_openai_exits(tmp_path):
         assert exc.value.code == 1
 
 
+def test_api_key_without_client_infers_openai(tmp_path):
+    """Providing --api-key without --client should infer openai_api, matching video-analyzer."""
+    td_path = write_training_data(tmp_path)
+    with patch("sys.argv", [
+        "video-analyzer-tune",
+        "--training-data", str(td_path),
+        "--api-key", "sk-test",
+        # --api-url missing → should exit with error, not ollama error
+        # This confirms openai_api was inferred (ollama wouldn't care about api-url)
+    ]):
+        with pytest.raises(SystemExit) as exc:
+            cli.main()
+        assert exc.value.code == 1
+
+
 def test_invalid_description_weight_exits(tmp_path):
     td_path = write_training_data(tmp_path)
     with patch("sys.argv", [
@@ -145,9 +160,9 @@ def test_main_builds_lm_config_for_ollama(tmp_path):
     with patch("sys.argv", [
         "video-analyzer-tune",
         "--training-data", str(td_path),
-        "--client", "ollama",
         "--model", "llava:13b",
         "--ollama-url", "http://localhost:11434",
+        # no --client or --api-key → should infer ollama
     ]), \
     patch("video_analyzer_tune.cli.load_training_data", return_value=[MagicMock()]), \
     patch("video_analyzer_tune.cli.PromptTuner") as mock_tuner_cls, \
