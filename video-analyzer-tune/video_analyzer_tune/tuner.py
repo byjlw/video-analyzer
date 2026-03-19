@@ -137,7 +137,6 @@ class PromptTuner:
         optimizer = MIPROv2(
             metric=metric,
             num_candidates=self.num_candidates,
-            num_trials=self.num_trials,
             max_bootstrapped_demos=self.max_bootstrapped_demos,
             max_labeled_demos=self.max_labeled_demos,
             verbose=True,
@@ -147,6 +146,7 @@ class PromptTuner:
             pipeline,
             trainset=trainset,
             valset=valset,
+            num_trials=self.num_trials,
         )
 
         logger.info("Optimization complete")

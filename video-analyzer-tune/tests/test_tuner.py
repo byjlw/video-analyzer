@@ -182,6 +182,10 @@ def test_optimize_passes_trainset_and_valset(ollama_config):
 
         tuner.optimize([make_training_example() for _ in range(5)])
 
-        call_kwargs = mock_optimizer.compile.call_args
-        assert "trainset" in call_kwargs.kwargs
-        assert "valset" in call_kwargs.kwargs
+        compile_kwargs = mock_optimizer.compile.call_args.kwargs
+        assert "trainset" in compile_kwargs
+        assert "valset" in compile_kwargs
+        # num_trials belongs in compile(), not MIPROv2.__init__()
+        assert "num_trials" in compile_kwargs
+        init_kwargs = mock_mipro.call_args.kwargs
+        assert "num_trials" not in init_kwargs
