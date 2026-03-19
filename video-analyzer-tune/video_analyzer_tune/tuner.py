@@ -144,7 +144,7 @@ class PromptTuner:
         )
 
         logger.info("Evaluating baseline (unoptimized) prompts...")
-        baseline_score = evaluator(pipeline)
+        baseline_score = float(evaluator(pipeline))
         logger.info(f"Baseline score: {baseline_score:.1f}%")
 
         optimizer = MIPROv2(
@@ -165,7 +165,7 @@ class PromptTuner:
         )
 
         logger.info("Evaluating optimized prompts...")
-        optimized_score = evaluator(optimized_pipeline)
+        optimized_score = float(evaluator(optimized_pipeline))
 
         improvement = optimized_score - baseline_score
         logger.info("")
