@@ -141,8 +141,9 @@ def test_configure_lm_openai(openai_config):
     with patch("dspy.LM") as mock_lm, patch("dspy.configure"):
         mock_lm.return_value = MagicMock()
         tuner._configure_lm()
+        # openai/ prefix required so LiteLLM routes through the OpenAI-compatible path
         mock_lm.assert_called_once_with(
-            model="gpt-4o",
+            model="openai/gpt-4o",
             api_base="https://api.openai.com/v1",
             api_key="sk-test",
         )

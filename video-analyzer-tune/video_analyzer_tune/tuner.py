@@ -52,9 +52,9 @@ class PromptTuner:
                 api_base=self.lm_config.get("api_base", "http://localhost:11434"),
                 api_key="ollama",
             )
-        else:  # openai_api
+        else:  # openai_api — prefix with openai/ so LiteLLM routes correctly
             lm = dspy.LM(
-                model=model,
+                model=f"openai/{model}",
                 api_base=self.lm_config.get("api_base"),
                 api_key=self.lm_config.get("api_key"),
             )
