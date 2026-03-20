@@ -10,7 +10,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="video-analyzer",
-    version="0.1.1",
+    version="0.1.2",
     author="Jesse White",
     description="A tool for analyzing videos using Vision models",
     long_description=long_description,
