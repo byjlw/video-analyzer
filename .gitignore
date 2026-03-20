@@ -1,7 +1,7 @@
 # assets
 assets/
 output/
-
+tuned_prompts/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

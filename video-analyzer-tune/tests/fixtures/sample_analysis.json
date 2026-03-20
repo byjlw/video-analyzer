@@ -1,0 +1,22 @@
+{
+  "video_path": "test_video.mp4",
+  "prompt": "What is happening?",
+  "frame_analyses": [
+    {
+      "frame": 0,
+      "timestamp": 0.0,
+      "response": "A person walks into frame from the left. The room is well lit with natural light from a window on the right. The person is wearing casual clothing.\nKey continuation points:\n- Watch for where the person moves next\n- Note any objects they interact with"
+    },
+    {
+      "frame": 1,
+      "timestamp": 1.5,
+      "response": "The person approaches a wooden table in the center of the room and reaches out to pick up a small object, possibly a book.\nKey continuation points:\n- Watch what the person does with the object\n- Note any changes in their direction of movement"
+    }
+  ],
+  "video_description": {
+    "response": "A person enters a well-lit room from the left side of the frame and walks toward a wooden table in the center. They pick up a small object, likely a book, from the table surface."
+  },
+  "transcript": {
+    "text": "No dialogue detected."
+  }
+}

@@ -1,0 +1,3 @@
+video-analyzer>=0.1.1
+dspy-ai>=2.6.0
+Pillow>=10.0.0

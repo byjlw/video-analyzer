@@ -18,6 +18,7 @@ A video analysis tool that combines vision models like Llama's 11B vision model 
 - [Project Structure](#project-structure)
 - [Configuration](#configuration)
 - [Output](#output)
+- [Prompt Tuning](#prompt-tuning)
 - [Uninstallation](#uninstallation)
 - [License](#license)
 - [Contributing](#contributing)
@@ -188,6 +189,18 @@ full sample output in `docs/sample_analysis.json`
 
 The tool uses a cascading configuration system with command line arguments taking highest priority, followed by user config (config/config.json), and finally the default config. See [docs/USAGES.md](docs/USAGES.md) for detailed configuration options.
 
+
+## Prompt Tuning
+
+The prompts that drive frame analysis and video reconstruction can be automatically optimized for your specific content and use case using [video-analyzer-tune](video-analyzer-tune/README.md).
+
+```bash
+pip install video-analyzer-tune
+```
+
+Run `video-analyzer` on a few representative videos, edit the outputs to show what ideal results look like, then let DSPy MIPROv2 find better prompt instructions automatically. The tuned prompts are written as new files you point to via your config — the main package is unaffected.
+
+See [video-analyzer-tune/README.md](video-analyzer-tune/README.md) for full instructions.
 
 ## Uninstallation
 
