@@ -92,15 +92,18 @@ class VideoProcessor:
             
         cap.release()
         
-        # Select the most significant frames
+        # Select the most significant frames by score, then restore chronological order
         selected_candidates = sorted(frame_candidates, key=lambda x: x[2], reverse=True)[:target_frames]
-        
+
         # If max_frames is specified, sample evenly across the candidates
         if max_frames is not None and max_frames < len(selected_candidates):
             step = len(selected_candidates) / max_frames
             selected_frames = [selected_candidates[int(i * step)] for i in range(max_frames)]
         else:
             selected_frames = selected_candidates
+
+        # Re-sort by frame number so frames on disk and in the JSON are chronological
+        selected_frames = sorted(selected_frames, key=lambda x: x[0])
 
         self.frames = []
         for idx, (frame_num, frame, score) in enumerate(selected_frames):
