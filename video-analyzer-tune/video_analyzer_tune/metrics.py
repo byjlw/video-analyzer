@@ -51,7 +51,7 @@ class VideoAnalysisMetric:
             user_question=getattr(example, "user_question", ""),
         )
 
-        if not getattr(example, "has_ideal_frame_notes", False):
+        if not getattr(example, "has_ideal_frame_notes", False) or self.frame_weight == 0.0:
             return desc_score
 
         frame_score = self._score_frame_notes(
