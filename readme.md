@@ -1,6 +1,6 @@
 # Video Analysis using vision models like Llama3.2 Vision and OpenAI's Whisper Models
 
-A video analysis tool that combines vision models like Llama's 11B vision model and Whisper to create a description by taking key frames, feeding them to the vision model to get details. It uses the details from each frame and the transcript, if available, to describe what's happening in the video. 
+A video analysis tool that combines vision models like Llama's 11B vision model and Whisper to create a description by taking key frames, feeding them to the vision model to get details. It uses the details from each frame and the transcript, if available, to describe what's happening in the video.
 
 ## Table of Contents
 - [Features](#features)
@@ -67,6 +67,8 @@ The system operates in three stages:
 
 ### Installation
 
+#### Using `pip` as Package Manager
+
 1. Clone the repository:
 ```bash
 git clone https://github.com/byjlw/video-analyzer.git
@@ -86,7 +88,67 @@ pip install .  # For regular installation
 pip install -e .  # For development installation
 ```
 
-4. Install FFmpeg:
+#### Using `uv` as Pacakge Manager
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/donadviser/video-analyzer.git
+    cd video-analyzer
+    ```
+
+2. From the `setup.py` create a new file named `pyproject.toml` in the root of the video-analyzer directory and add the following content. This file combines the package metadata, dependencies, and script information.
+    ```TOML
+    [build-system]
+    requires = ["setuptools>=61.0"]
+    build-backend = "setuptools.build_meta"
+
+    [project]
+    name = "video_analyzer"
+    version = "0.1.0"
+    authors = [
+      { name="byjlw", email="your.email@example.com" }, # Updated from original setup.py
+    ]
+    description = "A simple video analyzer package."
+    readme = "README.md"
+    requires-python = ">=3.8"
+    classifiers = [
+        "Programming Language :: Python :: 3",
+        "Operating System :: OS Independent",
+    ]
+    # Dependencies are moved here from requirements.txt
+    dependencies = [
+    ]
+
+    [project.urls]
+    "Homepage" = "https://github.com/donadviser/video-analyzer"
+
+    # Defines the command-line script
+    [project.scripts]
+    video-analyzer = "video_analyzer.main:main"
+    ```
+
+3. Using `pyenv` for Python version control, specify the Python version to used
+    ```bash
+    pyenv local 3.12.11
+    ```
+
+4. Create and Activate Virtual Environment
+Use `uv` to create and automatically activate a virtual environment. `uv` will create it in a `.venv` directory by default.
+    ```bash
+    uv venv
+    source .venv/bin/activate
+    ```
+
+5. Install the Packages in `requirements.txt`
+    ```bash
+    uv add -r requirements.txt
+    ```
+
+6. Update the dependencies and create the entry point
+    ```bash
+    uv pip install -e .
+    ```
+
+###  Install FFmpeg:
 - Ubuntu/Debian:
   ```bash
   sudo apt-get update && sudo apt-get install -y ffmpeg

@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "video_analyzer"
+version = "0.1.0"
+authors = [
+  { username="byjlw", name="Jesse White" },
+]
+description = "A 3-stage video analyzer package using AI for transcription and  visual analysis."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+# Dependencies are moved here from requirements.txt
+dependencies = [
+
+]
+
+[project.urls]
+"Homepage" = "https://github.com/byjlw/video-analyzer"
+
+# Defines the command-line script
+[project.scripts]
+video-analyzer = "video_analyzer.cli:main"
+
+# Items to exclude
+[tool.setuptools.packages.find]
+exclude = ["output", "input"]
