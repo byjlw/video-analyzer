@@ -38,6 +38,7 @@
         "narrative": 500
     },
     "audio": {
+        "backend": "faster-whisper",
         "whisper_model": "medium",
         "sample_rate": 16000,
         "channels": 1,

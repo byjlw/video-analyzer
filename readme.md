@@ -84,6 +84,8 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install .  # For regular installation
 # OR
 pip install -e .  # For development installation
+# OR
+pip install ".[mlx]"  # For optional mlx-whisper backend support on Apple Silicon
 ```
 
 4. Install FFmpeg:
