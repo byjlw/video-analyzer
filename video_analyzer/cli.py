@@ -19,16 +19,18 @@ from .clients.generic_openai_api import GenericOpenAIAPIClient
 # Initialize logger at module level
 logger = logging.getLogger(__name__)
 
+
 def get_log_level(level_str: str) -> int:
     """Convert string log level to logging constant."""
     levels = {
-        'DEBUG': logging.DEBUG,
-        'INFO': logging.INFO,
-        'WARNING': logging.WARNING,
-        'ERROR': logging.ERROR,
-        'CRITICAL': logging.CRITICAL
+        "DEBUG": logging.DEBUG,
+        "INFO": logging.INFO,
+        "WARNING": logging.WARNING,
+        "ERROR": logging.ERROR,
+        "CRITICAL": logging.CRITICAL,
     }
     return levels.get(level_str.upper(), logging.INFO)
+
 
 def cleanup_files(output_dir: Path):
     """Clean up temporary files and directories."""
@@ -37,7 +39,7 @@ def cleanup_files(output_dir: Path):
         if frames_dir.exists():
             shutil.rmtree(frames_dir)
             logger.debug(f"Cleaned up frames directory: {frames_dir}")
-            
+
         audio_file = output_dir / "audio.wav"
         if audio_file.exists():
             audio_file.unlink()
@@ -45,42 +47,89 @@ def cleanup_files(output_dir: Path):
     except Exception as e:
         logger.error(f"Error during cleanup: {e}")
 
+
 def create_client(config: Config):
     """Create the appropriate client based on configuration."""
     client_type = config.get("clients", {}).get("default", "ollama")
     client_config = get_client(config)
-    
+
     if client_type == "ollama":
         return OllamaClient(client_config["url"])
     elif client_type == "openai_api":
-        return GenericOpenAIAPIClient(client_config["api_key"], client_config["api_url"])
+        return GenericOpenAIAPIClient(
+            client_config["api_key"], client_config["api_url"]
+        )
     else:
         raise ValueError(f"Unknown client type: {client_type}")
+
+
+def resolve_max_frames(args: argparse.Namespace, config: Config) -> int:
+    """Resolve max_frames from CLI first, then config, then fallback."""
+    if args.max_frames is not None:
+        return args.max_frames
+    return config.get("frames", {}).get("max_frames", sys.maxsize)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Analyze video using Vision models")
     parser.add_argument("video_path", type=str, help="Path to the video file")
-    parser.add_argument("--config", type=str, default="config",
-                        help="Path to configuration directory")
-    parser.add_argument("--output", type=str, help="Output directory for analysis results")
-    parser.add_argument("--client", type=str, help="Client to use (ollama or openrouter)")
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="config/config.json",
+        help="Path to user configuration JSON file",
+    )
+    parser.add_argument(
+        "--output", type=str, help="Output directory for analysis results"
+    )
+    parser.add_argument(
+        "--client", type=str, help="Client to use (ollama or openrouter)"
+    )
     parser.add_argument("--ollama-url", type=str, help="URL for the Ollama service")
-    parser.add_argument("--api-key", type=str, help="API key for OpenAI-compatible service")
+    parser.add_argument(
+        "--api-key", type=str, help="API key for OpenAI-compatible service"
+    )
     parser.add_argument("--api-url", type=str, help="API URL for OpenAI-compatible API")
     parser.add_argument("--model", type=str, help="Name of the vision model to use")
     parser.add_argument("--duration", type=float, help="Duration in seconds to process")
-    parser.add_argument("--keep-frames", action="store_true", help="Keep extracted frames after analysis")
-    parser.add_argument("--whisper-model", type=str, help="Whisper model size (tiny, base, small, medium, large), or path to local Whisper model snapshot")
-    parser.add_argument("--start-stage", type=int, default=1, help="Stage to start processing from (1-3)")
-    parser.add_argument("--max-frames", type=int, default=sys.maxsize, help="Maximum number of frames to process")
-    parser.add_argument("--log-level", type=str, default="INFO", 
-                        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-                        help="Set the logging level (default: INFO)")
-    parser.add_argument("--prompt", type=str, default="",
-                        help="Question to ask about the video")
+    parser.add_argument(
+        "--keep-frames",
+        action="store_true",
+        default=None,
+        help="Keep extracted frames after analysis",
+    )
+    parser.add_argument(
+        "--whisper-model",
+        type=str,
+        help="Whisper model size (tiny, base, small, medium, large), or path to local Whisper model snapshot",
+    )
+    parser.add_argument(
+        "--start-stage",
+        type=int,
+        default=1,
+        help="Stage to start processing from (1-3)",
+    )
+    parser.add_argument(
+        "--max-frames",
+        type=int,
+        default=None,
+        help="Maximum number of frames to process",
+    )
+    parser.add_argument(
+        "--log-level",
+        type=str,
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level (default: INFO)",
+    )
+    parser.add_argument(
+        "--prompt", type=str, default="", help="Question to ask about the video"
+    )
     parser.add_argument("--language", type=str, default=None)
     parser.add_argument("--device", type=str, default="cpu")
-    parser.add_argument("--temperature", type=float, help="Temperature for LLM generation")
+    parser.add_argument(
+        "--temperature", type=float, help="Temperature for LLM generation"
+    )
     args = parser.parse_args()
 
     # Set up logging with specified level
@@ -88,8 +137,8 @@ def main():
     # Configure the root logger
     logging.basicConfig(
         level=log_level,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        force=True  # Force reconfiguration of the root logger
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        force=True,  # Force reconfiguration of the root logger
     )
     # Ensure our module logger has the correct level
     logger.setLevel(log_level)
@@ -101,16 +150,17 @@ def main():
     # Initialize components
     video_path = Path(args.video_path)
     output_dir = Path(config.get("output_dir"))
+    max_frames = resolve_max_frames(args, config)
     client = create_client(config)
     model = get_model(config)
     prompt_loader = PromptLoader(config.get("prompt_dir"), config.get("prompts", []))
-    
+
     try:
         transcript = None
         frames = []
         frame_analyses = []
         video_description = None
-        
+
         # Stage 1: Frame and Audio Processing
         if args.start_stage <= 1:
             # Initialize audio processor and extract transcript, the AudioProcessor accept following parameters that can be set in config.json:
@@ -118,17 +168,21 @@ def main():
             # whisper_model (str): Whisper model size or path (default: "medium")
             # device (str): Device to use for audio processing (default: "cpu")
             logger.debug("Initializing audio processing...")
-            audio_processor = AudioProcessor(language=config.get("audio", {}).get("language", ""), 
-                                             model_size_or_path=config.get("audio", {}).get("whisper_model", "medium"),
-                                             device=config.get("audio", {}).get("device", "cpu"))
-            
+            audio_processor = AudioProcessor(
+                language=config.get("audio", {}).get("language", ""),
+                model_size_or_path=config.get("audio", {}).get(
+                    "whisper_model", "medium"
+                ),
+                device=config.get("audio", {}).get("device", "cpu"),
+            )
+
             logger.info("Extracting audio from video...")
             try:
                 audio_path = audio_processor.extract_audio(video_path, output_dir)
             except Exception as e:
                 logger.error(f"Error extracting audio: {e}")
                 audio_path = None
-            
+
             if audio_path is None:
                 logger.debug("No audio found in video - skipping transcription")
                 transcript = None
@@ -136,42 +190,40 @@ def main():
                 logger.info("Transcribing audio...")
                 transcript = audio_processor.transcribe(audio_path)
                 if transcript is None:
-                    logger.warning("Could not generate reliable transcript. Proceeding with video analysis only.")
-            
+                    logger.warning(
+                        "Could not generate reliable transcript. Proceeding with video analysis only."
+                    )
+
             logger.info(f"Extracting frames from video using model {model}...")
-            processor = VideoProcessor(
-                video_path, 
-                output_dir / "frames", 
-                model
-            )
+            processor = VideoProcessor(video_path, output_dir / "frames", model)
             frames = processor.extract_keyframes(
                 frames_per_minute=config.get("frames", {}).get("per_minute", 60),
                 duration=config.get("duration"),
-                max_frames=args.max_frames
+                max_frames=max_frames,
             )
-            
+
         # Stage 2: Frame Analysis
         if args.start_stage <= 2:
             logger.info("Analyzing frames...")
             analyzer = VideoAnalyzer(
-                client, 
-                model, 
+                client,
+                model,
                 prompt_loader,
                 config.get("clients", {}).get("temperature", 0.2),
-                config.get("prompt", "")
+                config.get("prompt", ""),
             )
             frame_analyses = []
             for frame in frames:
                 analysis = analyzer.analyze_frame(frame)
                 frame_analyses.append(analysis)
-                
+
         # Stage 3: Video Reconstruction
         if args.start_stage <= 3:
             logger.info("Reconstructing video description...")
             video_description = analyzer.reconstruct_video(
                 frame_analyses, frames, transcript
             )
-        
+
         output_dir.mkdir(parents=True, exist_ok=True)
         results = {
             "metadata": {
@@ -181,42 +233,47 @@ def main():
                 "frames_per_minute": config.get("frames", {}).get("per_minute"),
                 "duration_processed": config.get("duration"),
                 "frames_extracted": len(frames),
-                "frames_processed": min(len(frames), args.max_frames),
+                "frames_processed": min(len(frames), max_frames),
                 "start_stage": args.start_stage,
                 "audio_language": transcript.language if transcript else None,
-                "transcription_successful": transcript is not None
+                "transcription_successful": transcript is not None,
             },
             "transcript": {
                 "text": transcript.text if transcript else None,
-                "segments": transcript.segments if transcript else None
-            } if transcript else None,
+                "segments": transcript.segments if transcript else None,
+            }
+            if transcript
+            else None,
             "frame_analyses": frame_analyses,
-            "video_description": video_description
+            "video_description": video_description,
         }
-        
+
         with open(output_dir / "analysis.json", "w") as f:
             json.dump(results, f, indent=2)
-            
+
         logger.info("\nTranscript:")
         if transcript:
             logger.info(transcript.text)
         else:
             logger.info("No reliable transcript available")
-            
+
         if video_description:
             logger.info("\nVideo Description:")
             logger.info(video_description.get("response", "No description generated"))
-        
+
         if not config.get("keep_frames"):
             cleanup_files(output_dir)
-        
-        logger.info(f"Analysis complete. Results saved to {output_dir / 'analysis.json'}")
-            
+
+        logger.info(
+            f"Analysis complete. Results saved to {output_dir / 'analysis.json'}"
+        )
+
     except Exception as e:
         logger.error(f"Error during video analysis: {e}")
         if not config.get("keep_frames"):
             cleanup_files(output_dir)
         raise
+
 
 if __name__ == "__main__":
     main()

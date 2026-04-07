@@ -26,7 +26,7 @@ video-analyzer path/to/video.mp4 --client openai_api --api-key your-key --api-ur
 | Argument | Description | Default | Example |
 |----------|-------------|---------|---------|
 | `video_path` | Path to the input video file | (Required) | `video.mp4` |
-| `--config` | Path to configuration directory | config/ | `--config /path/to/config/` |
+| `--config` | Path to user configuration JSON file | config/config.json | `--config /path/to/config.json` |
 | `--output` | Output directory for analysis results | output/ | `--output ./results/` |
 | `--client` | Client to use (ollama or openai_api) | ollama | `--client openai_api` |
 | `--ollama-url` | URL for the Ollama service | http://localhost:11434 | `--ollama-url http://localhost:11434` |
@@ -37,7 +37,7 @@ video-analyzer path/to/video.mp4 --client openai_api --api-key your-key --api-ur
 | `--keep-frames` | Keep extracted frames after analysis | False | `--keep-frames` |
 | `--whisper-model` | Whisper model size or model path | medium | `--whisper-model large` |
 | `--start-stage` | Stage to start processing from (1-3) | 1 | `--start-stage 2` |
-| `--max-frames` | Maximum number of frames to process. When specified, frames are sampled evenly across the video duration rather than just taking the first N frames. | sys.maxsize | `--max-frames 100` |
+| `--max-frames` | Maximum number of frames to process. When specified, frames are sampled evenly across the video duration rather than just taking the first N frames. | sys.maxsize (effectively no limit) | `--max-frames 100` |
 | `--log-level` | Set logging level | INFO | `--log-level DEBUG` |
 | `--prompt` | Question to ask about the video | "" | `--prompt "What activities are shown?"` |
 | `--language` | Set language for transcription | None (auto-detect) | `--language en` |
@@ -50,14 +50,18 @@ The `--start-stage` argument allows you to begin processing from a specific stag
 2. Frame Analysis
 3. Video Reconstruction
 
+`--start-stage` and `--max-frames` are currently command-line-only controls. They are not read from `config.json` at runtime.
+
 ## Configuration System
 
 The tool uses a cascading configuration system with the following priority:
 1. Command line arguments (highest priority)
-2. User config (config/config.json)
-3. Default config (config/default_config.json)
+2. User config (`config/config.json` by default, or the file passed to `--config`)
+3. Default config (`<package_dir>/config/default_config.json`)
 
 ### Configuration File Structure
+
+By default, the CLI loads user configuration from `config/config.json`. Passing `--config` lets you point to a different user configuration JSON file.
 
 ```json
 {
@@ -75,6 +79,16 @@ The tool uses a cascading configuration system with the following priority:
     }
   },
   "prompt_dir": "",
+  "prompts": [
+    {
+      "name": "Frame Analysis",
+      "path": "frame_analysis/frame_analysis.txt"
+    },
+    {
+      "name": "Video Reconstruction",
+      "path": "frame_analysis/describe.txt"
+    }
+  ],
   "output_dir": "output",
   "frames": {
     "per_minute": 10,
@@ -88,17 +102,21 @@ The tool uses a cascading configuration system with the following priority:
     "narrative": 1024
   },
   "audio": {
+    "whisper_model": "medium",
     "sample_rate": 16000,
     "channels": 1,
     "quality_threshold": 0.5,
     "chunk_length": 30,
     "language_confidence_threshold": 0.5,
-    "language": null
+    "language": null,
+    "device": "cpu"
   },
   "keep_frames": false,
   "prompt": ""
 }
 ```
+
+This JSON block is an example of the configuration shape, not an authoritative list of shipped default values.
 
 ### Configuration Options Explained
 
@@ -123,18 +141,25 @@ The tool uses a cascading configuration system with the following priority:
 - `response_length.narrative`: Max length for enhanced narrative
 
 #### Audio Processing Settings
+- `audio.whisper_model`: Whisper model size or local model path
 - `audio.sample_rate`: Audio sample rate in Hz
 - `audio.channels`: Number of audio channels
 - `audio.quality_threshold`: Minimum quality for transcription
 - `audio.chunk_length`: Audio chunk processing length
 - `audio.language_confidence_threshold`: Language detection confidence
 - `audio.language`: Force specific language (null for auto-detect)
+- `audio.device`: Device for Whisper inference (for example `cpu` or `cuda`)
 
 #### General Settings
 - `prompt_dir`: Custom prompt directory path
+- `prompts`: Prompt definitions loaded by `PromptLoader`
 - `output_dir`: Analysis output directory
 - `keep_frames`: Retain extracted frames
 - `prompt`: Custom analysis prompt
+
+### Current Behavior Notes
+
+- `--config` expects a path to a user configuration JSON file, not a directory.
 
 ## Common Use Cases
 
@@ -189,7 +214,7 @@ video-analyzer video.mp4 \
 ### Full Configuration with OpenRouter
 ```bash
 video-analyzer video.mp4 \
-    --config custom_config.json \
+    --config /path/to/custom-config.json \
     --output ./analysis_results \
     --client openai_api \
     --api-key your-key \

@@ -7,47 +7,57 @@ import pkg_resources
 
 logger = logging.getLogger(__name__)
 
+
+def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """Recursively merge user config on top of defaults."""
+    merged = dict(base)
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _deep_merge(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
+
+
 class Config:
-    def __init__(self, config_dir: str = "config"):
-        # Handle user-provided config directory
-        self.config_dir = Path(config_dir)
-        self.user_config = self.config_dir / "config.json"
-        
-        # First try to find default_config.json in the user-provided directory
-        self.default_config = self.config_dir / "default_config.json"
-        
-        # If not found, fallback to package's default config
-        if not self.default_config.exists():
-            try:
-                default_config_path = pkg_resources.resource_filename('video_analyzer', 'config/default_config.json')
-                self.default_config = Path(default_config_path)
-                logger.debug(f"Using packaged default config from {self.default_config}")
-            except Exception as e:
-                logger.error(f"Error finding default config: {e}")
-                raise
-            
+    def __init__(self, config_path: str = "config/config.json"):
+        self.user_config = Path(config_path)
+
+        try:
+            default_config_path = pkg_resources.resource_filename(
+                "video_analyzer", "config/default_config.json"
+            )
+            self.default_config = Path(default_config_path)
+            logger.debug(f"Using packaged default config from {self.default_config}")
+        except Exception as e:
+            logger.error(f"Error finding default config: {e}")
+            raise
+
         self.load_config()
 
     def load_config(self):
         """Load configuration from JSON file with cascade:
-        1. Try user config (config.json)
-        2. Fall back to default config (default_config.json)
+        1. Load default config
+        2. Merge user config on top if present
         """
         try:
+            with open(self.default_config) as f:
+                self.config = json.load(f)
+
             if self.user_config.exists():
                 logger.debug(f"Loading user config from {self.user_config}")
                 with open(self.user_config) as f:
-                    self.config = json.load(f)
+                    self.config = _deep_merge(self.config, json.load(f))
             else:
-                logger.debug(f"No user config found, loading default config from {self.default_config}")
-                with open(self.default_config) as f:
-                    self.config = json.load(f)
-                    
+                logger.debug(
+                    f"No user config found, loading default config from {self.default_config}"
+                )
+
             # Ensure prompts is a list
             if not isinstance(self.config.get("prompts", []), list):
                 logger.warning("Prompts in config is not a list, setting to empty list")
                 self.config["prompts"] = []
-                
+
         except Exception as e:
             logger.error(f"Error loading config: {e}")
             raise
@@ -58,6 +68,8 @@ class Config:
 
     def update_from_args(self, args: argparse.Namespace):
         """Update configuration with command line arguments."""
+        self.config.setdefault("clients", {})
+        self.config.setdefault("audio", {})
         for key, value in vars(args).items():
             if value is not None:  # Only update if argument was provided
                 if key == "client":
@@ -76,7 +88,9 @@ class Config:
                     self.config["clients"][client]["model"] = value
                 elif key == "prompt":
                     self.config["prompt"] = value
-                #overide audio config
+                elif key == "output":
+                    self.config["output_dir"] = value
+                # overide audio config
                 elif key == "whisper_model":
                     self.config["audio"]["whisper_model"] = value  # default is 'medium'
                 elif key == "language":
@@ -86,25 +100,29 @@ class Config:
                     self.config["audio"]["device"] = value
                 elif key == "temperature":
                     self.config["clients"]["temperature"] = value
-                elif key not in ["start_stage", "max_frames"]:  # Ignore these as they're command-line only
+                elif key not in [
+                    "start_stage",
+                    "max_frames",
+                ]:  # Ignore these as they're command-line only
                     self.config[key] = value
 
     def save_user_config(self):
         """Save current configuration to user config file."""
         try:
-            self.config_dir.mkdir(parents=True, exist_ok=True)
-            with open(self.user_config, 'w') as f:
+            self.user_config.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.user_config, "w") as f:
                 json.dump(self.config, f, indent=2)
             logger.debug(f"Saved user config to {self.user_config}")
         except Exception as e:
             logger.error(f"Error saving user config: {e}")
             raise
 
+
 def get_client(config: Config) -> dict:
     """Get the appropriate client configuration based on configuration."""
     client_type = config.get("clients", {}).get("default", "ollama")
     client_config = config.get("clients", {}).get(client_type, {})
-    
+
     if client_type == "ollama":
         return {"url": client_config.get("url", "http://localhost:11434")}
     elif client_type == "openai_api":
@@ -114,12 +132,10 @@ def get_client(config: Config) -> dict:
             raise ValueError("API key is required when using OpenAI API client")
         if not api_url:
             raise ValueError("API URL is required when using OpenAI API client")
-        return {
-            "api_key": api_key,
-            "api_url": api_url
-        }
+        return {"api_key": api_key, "api_url": api_url}
     else:
         raise ValueError(f"Unknown client type: {client_type}")
+
 
 def get_model(config: Config) -> str:
     """Get the appropriate model based on client type and configuration."""
