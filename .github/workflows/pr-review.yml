@@ -12,8 +12,6 @@ concurrency:
 permissions:
   pull-requests: write
   contents: read
-  # Required to use GitHub Models (free)
-  models: read
 
 jobs:
   review:
@@ -36,29 +34,22 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        # openai SDK works with GitHub Models endpoint; anthropic SDK for Claude.
-        # Install both so the script can use whichever backend is configured.
-        run: pip install anthropic openai PyGithub
+        run: pip install openai PyGithub
 
       - name: Run AI PR Review
         env:
-          # ── Backend selector ────────────────────────────────────────────────
-          # Set to "github_models" (free) or "anthropic" (paid, higher quality).
-          # When using "anthropic" you must add ANTHROPIC_API_KEY as a repo secret.
-          REVIEW_BACKEND: ${{ vars.REVIEW_BACKEND || 'github_models' }}
+          # ── OpenRouter config ────────────────────────────────────────────────
+          # Add OPENROUTER_API_KEY as a repo secret (Settings → Secrets → Actions).
+          # To swap models, change REVIEW_MODEL in repo variables — no code edits needed.
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          REVIEW_MODEL: ${{ vars.REVIEW_MODEL || 'qwen/qwen3-235b-a22b' }}
 
-          # GitHub Models – token is provided automatically, no secret needed.
-          GITHUB_MODELS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-          # Anthropic – only needed when REVIEW_BACKEND=anthropic.
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-
-          # ── Cost controls ───────────────────────────────────────────────────
-          # Hard limit: if the total diff line-count exceeds this, skip the AI
-          # call and post a "please split your PR" comment instead.
+          # ── Cost controls ────────────────────────────────────────────────────
+          # Hard limit: diffs larger than this get a "please split your PR" comment
+          # instead of an AI call, capping per-review token spend.
           MAX_DIFF_LINES: ${{ vars.MAX_DIFF_LINES || '800' }}
 
-          # ── PR metadata (passed via env, not args, to avoid shell injection) ─
+          # ── PR metadata (passed via env to avoid shell injection) ─────────────
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO_FULL_NAME: ${{ github.repository }}
