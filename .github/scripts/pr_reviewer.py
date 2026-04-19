@@ -2,44 +2,22 @@
 """
 AI-powered first-pass PR reviewer for byjlw/video-analyzer.
 
-Key design decisions (informed by studying CodeRabbit and similar tools):
-
-1. DEDICATED OpenRouter key with its own spend cap
-   Create a separate key at openrouter.ai/settings/keys named
-   "video-analyzer-pr-reviewer" and set a monthly credit limit.
-   Store it as the repo secret OPENROUTER_PR_REVIEW_KEY — completely
-   isolated from your personal OpenRouter usage.
-
-2. Inline (line-level) review comments
-   Rather than one big comment wall, the model is asked to return
-   structured feedback with filename + line number so comments appear
-   directly on the diff lines in GitHub's review UI.
-
-3. Incremental reviews
-   On `synchronize` events (new commits pushed to an open PR) the script
-   only reviews files that changed since the last bot review commit SHA,
-   saving tokens and reducing noise.
-
-4. Per-path instructions
-   .github/pr-reviewer-config.yml lets you attach extra instructions to
-   specific paths (e.g. "this dir is security-critical") without touching
-   Python code.
-
-5. Deduplication
-   Existing bot review comments on a line are not re-posted.
+No git checkout needed — the script fetches everything (config file, PR
+metadata, diff) via the GitHub API. This means it works on fork PRs and
+requires zero JS actions in the workflow.
 
 Model swap: change the REVIEW_MODEL repo variable — no code edits needed.
-Cost cap:   set a credit limit on the dedicated OpenRouter key.
+Cost cap:   set a credit limit on the dedicated OPENROUTER_PR_REVIEW_KEY.
 """
 
 from __future__ import annotations
 
+import base64
 import json
 import os
 import re
 import sys
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Optional
 
 import yaml
@@ -52,7 +30,7 @@ DEFAULT_MAX_DIFF_LINES = 800
 MAX_OUTPUT_TOKENS      = 1500
 OPENROUTER_BASE_URL    = "https://openrouter.ai/api/v1"
 DEFAULT_MODEL          = "qwen/qwen3-235b-a22b"
-CONFIG_PATH            = ".github/pr-reviewer-config.yml"
+CONFIG_API_PATH        = ".github/pr-reviewer-config.yml"
 BOT_MARKER             = "<!-- ai-pr-review -->"
 
 # ── Project context ───────────────────────────────────────────────────────────
@@ -75,17 +53,20 @@ and OpenAI Whisper for audio. It can run fully locally or via cloud APIs.
 - Python version target: 3.11+.
 
 ### Code quality rules — flag any violation
-1. SCOPE CREEP: The PR must only change what is necessary to achieve its stated goal.
-   Flag any refactoring, style fixes, whitespace changes, or edits to code that is
-   unrelated to the PR's purpose. Every changed line should be justified by the PR description.
+1. SCOPE CREEP: The PR must only change what is necessary to achieve its stated
+   goal. Flag any refactoring, style fixes, whitespace changes, or edits to code
+   that is unrelated to the PR's purpose. Every changed line should be justified
+   by the PR description.
 
-2. TEST PLAN: The PR description must include a concrete test plan explaining how the
-   author verified the change works and did not break existing functionality. This means
-   specific steps, commands, or scenarios — not just "I tested it". Flag if absent or vague.
+2. TEST PLAN: The PR description must include a concrete test plan explaining how
+   the author verified the change works and did not break existing functionality.
+   Specific steps, commands, or scenarios are required — not just "I tested it".
+   Flag if absent or vague.
 
-3. NEW DEPENDENCIES: New packages in requirements.txt (or setup.py install_requires) must
-   be genuinely necessary. Flag any dependency that: duplicates existing functionality,
-   could be avoided with stdlib, or is added without clear justification in the PR description.
+3. NEW DEPENDENCIES: New packages in requirements.txt (or setup.py
+   install_requires) must be genuinely necessary. Flag any dependency that
+   duplicates existing functionality, could be replaced by the stdlib, or is
+   added without clear justification in the PR description.
 
 ### Code style
 - PEP 8, meaningful names, type hints on signatures, document complex logic.
@@ -106,23 +87,22 @@ Return a JSON object with exactly this shape — no prose outside the JSON:
       "path": "<file path>",
       "line": <integer, line number in the NEW file>,
       "body": "<markdown comment, be specific and constructive>"
-    },
-    ...
+    }
   ]
 }
 
 Rules for inline_comments:
-- Flag real issues only: bugs, scope creep (unnecessary changes), missing or vague
-  test plan, unjustified new dependencies, type hint omissions, doc gaps.
-- DO NOT comment on style or formatting that is already consistent with the surrounding
-  code, and DO NOT suggest changes to code that is not touched by this PR.
-- If the PR description lacks a concrete test plan (specific steps/commands to verify
-  the change works and didn't break anything), raise it as an inline comment on the
-  first changed file.
-- If a new dependency is added, verify it is justified. Flag it if the same thing
-  could be done with the stdlib or an already-present package.
-- If any changed lines appear to be unrelated style fixes or refactoring not mentioned
-  in the PR description, flag them as scope creep.
+- Flag real issues only: bugs, scope creep (unnecessary changes), missing or
+  vague test plan, unjustified new dependencies, type hint omissions, doc gaps.
+- DO NOT comment on style or formatting that is already consistent with the
+  surrounding code, and DO NOT suggest changes to code not touched by this PR.
+- If the PR description lacks a concrete test plan (specific steps/commands to
+  verify the change works and didn't break anything), raise it as an inline
+  comment on the first changed file.
+- If a new dependency is added, verify it is justified. Flag it if the same
+  thing could be done with the stdlib or an already-present package.
+- If any changed lines appear to be unrelated style fixes or refactoring not
+  mentioned in the PR description, flag them as scope creep.
 - Keep total inline_comments under 12.
 - Return ONLY valid JSON. No markdown fences, no preamble.
 """
@@ -136,27 +116,28 @@ class ReviewerConfig:
     path_instructions: list[dict] = field(default_factory=list)
 
 
-def load_config() -> ReviewerConfig:
+def load_config(repo) -> ReviewerConfig:
+    """Fetch .github/pr-reviewer-config.yml from the default branch via API."""
     try:
-        with open(CONFIG_PATH) as f:
-            raw = yaml.safe_load(f) or {}
+        file = repo.get_contents(CONFIG_API_PATH)
+        raw = yaml.safe_load(base64.b64decode(file.content).decode()) or {}
         return ReviewerConfig(
             exclude_patterns=raw.get("exclude_patterns", []),
             path_instructions=raw.get("path_instructions", []),
         )
-    except FileNotFoundError:
+    except Exception as e:
+        print(f"Config not found or unreadable ({e}), using defaults.")
         return ReviewerConfig()
 
 
 def path_instructions_for(filepath: str, config: ReviewerConfig) -> str:
-    """Return any extra instructions that apply to this file path."""
     import fnmatch
-    extras = []
-    for rule in config.path_instructions:
-        if fnmatch.fnmatch(filepath, rule["path"] + "*") or \
-           filepath.startswith(rule["path"]):
-            extras.append(rule["instructions"].strip())
-    return "\n".join(extras)
+    return "\n".join(
+        rule["instructions"].strip()
+        for rule in config.path_instructions
+        if fnmatch.fnmatch(filepath, rule["path"] + "*")
+        or filepath.startswith(rule["path"])
+    )
 
 
 # ── Diff helpers ──────────────────────────────────────────────────────────────
@@ -167,7 +148,6 @@ def is_excluded(filename: str, patterns: list[str]) -> bool:
 
 
 def last_reviewed_sha(pr: PullRequest) -> Optional[str]:
-    """Return the head SHA recorded in the most recent bot summary comment, or None."""
     for comment in reversed(list(pr.get_issue_comments())):
         if BOT_MARKER in comment.body:
             m = re.search(r"<!-- reviewed-sha:([0-9a-f]+) -->", comment.body)
@@ -176,19 +156,12 @@ def last_reviewed_sha(pr: PullRequest) -> Optional[str]:
     return None
 
 
-def get_changed_files(pr: PullRequest, since_sha: Optional[str],
-                      config: ReviewerConfig) -> tuple[list, int]:
-    """
-    Return (files, total_lines).
-    If since_sha is set, only return files whose patch changed after that commit
-    (incremental review). Otherwise return all files (first review).
-    """
-    all_files = list(pr.get_files())
+def get_changed_files(pr: PullRequest, config: ReviewerConfig) -> tuple[list, int]:
     total_lines = 0
     result = []
-    for f in all_files:
+    for f in pr.get_files():
         if is_excluded(f.filename, config.exclude_patterns):
-            print(f"  Skipping excluded file: {f.filename}")
+            print(f"  Skipping excluded: {f.filename}")
             continue
         total_lines += (f.additions or 0) + (f.deletions or 0)
         result.append(f)
@@ -203,10 +176,8 @@ def build_diff_text(files: list, config: ReviewerConfig) -> str:
         if extras:
             header += f"\n<!-- path-instructions: {extras} -->"
         parts.append(header)
-        if f.patch:
-            parts.append(f"```diff\n{f.patch}\n```")
-        else:
-            parts.append("_(binary or no patch available)_")
+        parts.append(f"```diff\n{f.patch}\n```" if f.patch
+                     else "_(binary or no patch available)_")
     return "\n\n".join(parts)
 
 
@@ -223,39 +194,35 @@ def build_user_message(pr_title: str, pr_author: str, pr_body: str, diff: str) -
 # ── AI call ───────────────────────────────────────────────────────────────────
 
 def call_openrouter(user_message: str, model: str) -> dict:
-    """Call OpenRouter and return parsed JSON review object."""
     client = OpenAI(
         base_url=OPENROUTER_BASE_URL,
         api_key=os.environ["OPENROUTER_API_KEY"],
     )
-    system = SUMMARY_PROMPT + "\n\n" + PROJECT_PHILOSOPHY
     resp = client.chat.completions.create(
         model=model,
         max_tokens=MAX_OUTPUT_TOKENS,
         messages=[
-            {"role": "system", "content": system},
+            {"role": "system", "content": SUMMARY_PROMPT + "\n\n" + PROJECT_PHILOSOPHY},
             {"role": "user",   "content": user_message},
         ],
         extra_headers={"X-Title": "video-analyzer PR reviewer"},
     )
     raw = resp.choices[0].message.content.strip()
-    # Strip markdown fences if the model adds them despite instructions
     raw = re.sub(r"^```(?:json)?\s*", "", raw)
     raw = re.sub(r"\s*```$", "", raw)
     return json.loads(raw)
 
 
-# ── GitHub posting helpers ─────────────────────────────────────────────────────
+# ── GitHub posting ────────────────────────────────────────────────────────────
 
 RECOMMENDATION_EMOJI = {
-    "APPROVE":         "✅",
-    "REQUEST_CHANGES": "📝",
-    "DISCUSS":         "💬",
+    "APPROVE":         "\u2705",
+    "REQUEST_CHANGES": "\U0001f4dd",
+    "DISCUSS":         "\U0001f4ac",
 }
 
 
 def existing_bot_comment_lines(pr: PullRequest) -> set[tuple[str, int]]:
-    """Return set of (path, line) tuples already commented on by the bot."""
     seen: set[tuple[str, int]] = set()
     for comment in pr.get_review_comments():
         if BOT_MARKER in (comment.body or ""):
@@ -264,20 +231,18 @@ def existing_bot_comment_lines(pr: PullRequest) -> set[tuple[str, int]]:
 
 
 def post_summary_comment(pr: PullRequest, review: dict,
-                          model: str, head_sha: str, is_incremental: bool) -> None:
-    """Replace the previous bot summary comment with the new one."""
-    emoji = RECOMMENDATION_EMOJI.get(review.get("recommendation", ""), "🤖")
-    incremental_note = " _(incremental — only new commits reviewed)_" if is_incremental else ""
-
-    body = (
+                         model: str, head_sha: str, is_incremental: bool) -> None:
+    emoji = RECOMMENDATION_EMOJI.get(review.get("recommendation", ""), "\U0001f916")
+    note  = " _(incremental \u2014 only new commits reviewed)_" if is_incremental else ""
+    body  = (
         f"{BOT_MARKER}\n"
         f"<!-- reviewed-sha:{head_sha} -->\n"
-        f"## 🤖 Automated First-Pass Review{incremental_note}\n"
+        f"## \U0001f916 Automated First-Pass Review{note}\n"
         f"_Model: `{model}` via OpenRouter. A human maintainer will follow up._\n\n"
         f"---\n\n"
         f"### Summary\n{review.get('summary', '_No summary generated._')}\n\n"
         f"### Recommendation\n"
-        f"{emoji} **{review.get('recommendation', '?')}** — "
+        f"{emoji} **{review.get('recommendation', '?')}** \u2014 "
         f"{review.get('recommendation_reason', '')}\n"
     )
     for comment in pr.get_issue_comments():
@@ -288,9 +253,8 @@ def post_summary_comment(pr: PullRequest, review: dict,
 
 
 def post_inline_comments(pr: PullRequest, inline_comments: list[dict],
-                          already_commented: set[tuple[str, int]],
-                          head_sha: str) -> None:
-    """Post inline review comments, skipping lines already covered."""
+                         already_commented: set[tuple[str, int]],
+                         head_sha: str) -> None:
     commit = pr.base.repo.get_commit(head_sha)
     posted = 0
     for ic in inline_comments:
@@ -300,7 +264,7 @@ def post_inline_comments(pr: PullRequest, inline_comments: list[dict],
         if not (path and line and body):
             continue
         if (path, line) in already_commented:
-            print(f"  Skipping duplicate comment on {path}:{line}")
+            print(f"  Skipping duplicate on {path}:{line}")
             continue
         try:
             pr.create_review_comment(
@@ -311,7 +275,6 @@ def post_inline_comments(pr: PullRequest, inline_comments: list[dict],
             )
             posted += 1
         except Exception as e:
-            # Line may not exist in diff; fall back gracefully
             print(f"  Could not post inline comment on {path}:{line}: {e}")
     print(f"  Posted {posted} inline comment(s).")
 
@@ -319,8 +282,8 @@ def post_inline_comments(pr: PullRequest, inline_comments: list[dict],
 def post_too_large_comment(pr: PullRequest, total_lines: int, limit: int) -> None:
     body = (
         f"{BOT_MARKER}\n"
-        f"## 🤖 Automated First-Pass Review\n\n"
-        f"⚠️ **This PR is too large to review automatically** "
+        f"## \U0001f916 Automated First-Pass Review\n\n"
+        f"\u26a0\ufe0f **This PR is too large to review automatically** "
         f"({total_lines} changed lines; limit is {limit}).\n\n"
         f"Please split it into smaller, focused PRs. "
         f"See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidance."
@@ -353,16 +316,21 @@ def main() -> None:
         print("OPENROUTER_PR_REVIEW_KEY secret is not set.", file=sys.stderr)
         sys.exit(1)
 
-    config = load_config()
-    print(f"Loaded config: {len(config.exclude_patterns)} exclusions, "
-          f"{len(config.path_instructions)} path rules")
-
     gh   = Github(token)
     repo = gh.get_repo(repo_name)
     pr   = repo.get_pull(pr_number)
 
-    # Incremental: on synchronize, only review files new since last bot review
-    since_sha: Optional[str] = None
+    # For workflow_dispatch the env vars are empty; fetch from API instead
+    if not pr_title:
+        pr_title  = pr.title
+        pr_body   = pr.body or ""
+        pr_author = pr.user.login
+        head_sha  = pr.head.sha
+
+    config = load_config(repo)
+    print(f"Config: {len(config.exclude_patterns)} exclusions, "
+          f"{len(config.path_instructions)} path rules")
+
     is_incremental = False
     if pr_action == "synchronize":
         since_sha = last_reviewed_sha(pr)
@@ -372,11 +340,11 @@ def main() -> None:
 
     print(f"Model: {model} | Max diff lines: {max_lines}")
     print(f"Fetching diff for PR #{pr_number}...")
-    files, total_lines = get_changed_files(pr, since_sha, config)
-    print(f"Files to review: {len(files)} | Lines changed: {total_lines}")
+    files, total_lines = get_changed_files(pr, config)
+    print(f"Files: {len(files)} | Lines changed: {total_lines}")
 
     if total_lines > max_lines:
-        print(f"Diff too large ({total_lines} > {max_lines}). Posting size warning.")
+        print(f"Too large ({total_lines} > {max_lines}), posting warning.")
         post_too_large_comment(pr, total_lines, max_lines)
         return
 
@@ -384,7 +352,7 @@ def main() -> None:
         print("No reviewable files after exclusions. Skipping.")
         return
 
-    diff = build_diff_text(files, config)
+    diff    = build_diff_text(files, config)
     message = build_user_message(pr_title, pr_author, pr_body, diff)
 
     print(f"Calling OpenRouter ({model})...")
@@ -393,7 +361,7 @@ def main() -> None:
     already_commented = existing_bot_comment_lines(pr)
     inline_comments   = review.get("inline_comments", [])
 
-    print(f"Posting summary comment...")
+    print("Posting summary comment...")
     post_summary_comment(pr, review, model, head_sha, is_incremental)
 
     print(f"Posting {len(inline_comments)} inline comment(s)...")

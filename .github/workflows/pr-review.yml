@@ -30,51 +30,41 @@ jobs:
                 github.event.pull_request.user.login)
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4.2.2
-        # Shallow checkout of main — only needed to read .github/pr-reviewer-config.yml.
-        # The reviewer script uses the GitHub API for all diff/PR data, not git.
-
       - name: Set up Python
         uses: actions/setup-python@v5.5.0
         with:
           python-version: '3.11'
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
       - name: Install dependencies
         run: pip install openai PyGithub PyYAML
 
-      - name: Fetch PR metadata (manual dispatch only)
-        if: github.event_name == 'workflow_dispatch'
-        id: pr_meta
-        uses: actions/github-script@v7.0.1
-        with:
-          script: |
-            const pr = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: ${{ inputs.pr_number }}
-            });
-            core.setOutput('title',    pr.data.title);
-            core.setOutput('body',     pr.data.body || '');
-            core.setOutput('author',   pr.data.user.login);
-            core.setOutput('head_sha', pr.data.head.sha);
-
       - name: Run AI PR Review
         env:
-          # ── OpenRouter ───────────────────────────────────────────────────────
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+          # ── OpenRouter ─────────────────────────────────────────────────────
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_PR_REVIEW_KEY }}
           REVIEW_MODEL: ${{ vars.REVIEW_MODEL || 'qwen/qwen3-235b-a22b' }}
-
-          # ── Cost controls ────────────────────────────────────────────────────
+          # ── Cost controls ──────────────────────────────────────────────────
           MAX_DIFF_LINES: ${{ vars.MAX_DIFF_LINES || '800' }}
-
-          # ── PR metadata ───────────────────────────────────────────────────────
+          # ── PR metadata ────────────────────────────────────────────────────
+          # For workflow_dispatch the script fetches metadata itself via the API.
+          # For pull_request events GitHub populates all of these directly.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER:    ${{ github.event.pull_request.number  || inputs.pr_number }}
           REPO_FULL_NAME: ${{ github.repository }}
-          PR_TITLE:     ${{ github.event.pull_request.title   || steps.pr_meta.outputs.title }}
-          PR_BODY:      ${{ github.event.pull_request.body    || steps.pr_meta.outputs.body }}
-          PR_AUTHOR:    ${{ github.event.pull_request.user.login || steps.pr_meta.outputs.author }}
-          PR_HEAD_SHA:  ${{ github.event.pull_request.head.sha  || steps.pr_meta.outputs.head_sha }}
-          PR_ACTION:    ${{ github.event.action || 'opened' }}
-        run: python .github/scripts/pr_reviewer.py
+          PR_NUMBER:   ${{ github.event.pull_request.number  || inputs.pr_number }}
+          PR_TITLE:    ${{ github.event.pull_request.title   || '' }}
+          PR_BODY:     ${{ github.event.pull_request.body    || '' }}
+          PR_AUTHOR:   ${{ github.event.pull_request.user.login || '' }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha  || '' }}
+          PR_ACTION:   ${{ github.event.action || 'opened' }}
+        run: |
+          # Download the reviewer script directly from the default branch via
+          # the GitHub API — no checkout needed, works on fork PRs too.
+          curl -fsSL \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.raw+json" \
+            "https://api.github.com/repos/$REPO_FULL_NAME/contents/.github/scripts/pr_reviewer.py" \
+            -o pr_reviewer.py
+          python pr_reviewer.py
