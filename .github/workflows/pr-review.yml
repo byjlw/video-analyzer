@@ -4,13 +4,26 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+# Only one review runs at a time per PR; newer pushes cancel the old run.
+concurrency:
+  group: pr-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   pull-requests: write
   contents: read
+  # Required to use GitHub Models (free)
+  models: read
 
 jobs:
   review:
     runs-on: ubuntu-latest
+
+    # Skip bots (Dependabot, Renovate, etc.) to avoid wasting API calls.
+    if: |
+      !contains(fromJSON('["dependabot[bot]","renovate[bot]","github-actions[bot]"]'),
+                github.event.pull_request.user.login)
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,11 +36,29 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install anthropic PyGithub
+        # openai SDK works with GitHub Models endpoint; anthropic SDK for Claude.
+        # Install both so the script can use whichever backend is configured.
+        run: pip install anthropic openai PyGithub
 
       - name: Run AI PR Review
         env:
+          # ── Backend selector ────────────────────────────────────────────────
+          # Set to "github_models" (free) or "anthropic" (paid, higher quality).
+          # When using "anthropic" you must add ANTHROPIC_API_KEY as a repo secret.
+          REVIEW_BACKEND: ${{ vars.REVIEW_BACKEND || 'github_models' }}
+
+          # GitHub Models – token is provided automatically, no secret needed.
+          GITHUB_MODELS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          # Anthropic – only needed when REVIEW_BACKEND=anthropic.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+          # ── Cost controls ───────────────────────────────────────────────────
+          # Hard limit: if the total diff line-count exceeds this, skip the AI
+          # call and post a "please split your PR" comment instead.
+          MAX_DIFF_LINES: ${{ vars.MAX_DIFF_LINES || '800' }}
+
+          # ── PR metadata (passed via env, not args, to avoid shell injection) ─
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO_FULL_NAME: ${{ github.repository }}
