@@ -1,0 +1,40 @@
+# AI PR Reviewer configuration
+# Edit this file to customise how the bot reviews pull requests.
+# No code changes needed — the reviewer script reads this at runtime.
+
+# Files / glob patterns to skip entirely (lock files, generated code, assets…)
+exclude_patterns:
+  - "**/*.lock"
+  - "**/package-lock.json"
+  - "**/*.min.js"
+  - "**/*.min.css"
+  - "docs/sample_analysis.json"
+
+# Per-path extra instructions fed to the model alongside the default prompt.
+# Use this to flag security-critical areas or domain-specific rules.
+path_instructions:
+  - path: "video_analyzer/"
+    instructions: |
+      This is the core library. Pay close attention to:
+      - Type hints on all public functions
+      - Backwards compatibility with the existing CLI interface
+      - Error handling for file I/O and network calls
+      - No new hard dependencies without a requirements.txt entry
+
+  - path: "requirements.txt"
+    instructions: |
+      Check that:
+      - Version pins use >= not ==, to avoid overly tight constraints
+      - Conditional markers (e.g. ; python_version >= "3.13") are valid PEP 508
+      - No package duplicates or conflicts with existing entries
+      - Any new dependency is clearly justified in the PR description
+
+  - path: "setup.py"
+    instructions: |
+      Ensure python_requires and install_requires stay in sync with
+      requirements.txt and the Python version stated in the README (3.11+).
+
+  - path: ".github/"
+    instructions: |
+      CI/workflow changes: verify no secrets are echoed, permissions follow
+      least-privilege, and any new Actions steps pin to a SHA or tagged version.

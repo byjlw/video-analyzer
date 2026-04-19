@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
-# Only one review runs at a time per PR; newer pushes cancel the old run.
+# Only one review runs at a time per PR; a new push cancels the in-flight run.
 concurrency:
   group: pr-review-${{ github.event.pull_request.number }}
   cancel-in-progress: true
@@ -17,7 +17,7 @@ jobs:
   review:
     runs-on: ubuntu-latest
 
-    # Skip bots (Dependabot, Renovate, etc.) to avoid wasting API calls.
+    # Skip bots (Dependabot, Renovate, etc.)
     if: |
       !contains(fromJSON('["dependabot[bot]","renovate[bot]","github-actions[bot]"]'),
                 github.event.pull_request.user.login)
@@ -38,22 +38,31 @@ jobs:
 
       - name: Run AI PR Review
         env:
-          # ── OpenRouter config ────────────────────────────────────────────────
-          # Add OPENROUTER_API_KEY as a repo secret (Settings → Secrets → Actions).
-          # To swap models, change REVIEW_MODEL in repo variables — no code edits needed.
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          # ── OpenRouter ───────────────────────────────────────────────────────
+          # Use a DEDICATED OpenRouter key for this reviewer (with its own spend
+          # cap) so it can't consume your personal OpenRouter budget.
+          # Create the key at: openrouter.ai/settings/keys
+          #   Name:        video-analyzer-pr-reviewer
+          #   Credit limit: e.g. $5/month
+          # Then add it as a repo secret named OPENROUTER_PR_REVIEW_KEY.
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_PR_REVIEW_KEY }}
+
+          # To swap models: Repo → Settings → Variables → Actions → REVIEW_MODEL
+          # Any model slug from openrouter.ai/models works, no code changes needed.
           REVIEW_MODEL: ${{ vars.REVIEW_MODEL || 'qwen/qwen3-235b-a22b' }}
 
           # ── Cost controls ────────────────────────────────────────────────────
-          # Hard limit: diffs larger than this get a "please split your PR" comment
-          # instead of an AI call, capping per-review token spend.
+          # Diffs larger than this get a "please split" comment instead of an AI
+          # call, capping worst-case token spend per review.
           MAX_DIFF_LINES: ${{ vars.MAX_DIFF_LINES || '800' }}
 
-          # ── PR metadata (passed via env to avoid shell injection) ─────────────
+          # ── PR metadata (via env to prevent shell injection) ──────────────────
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO_FULL_NAME: ${{ github.repository }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_ACTION: ${{ github.event.action }}
         run: python .github/scripts/pr_reviewer.py
