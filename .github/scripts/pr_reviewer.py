@@ -2,39 +2,40 @@
 """
 AI-powered first-pass PR reviewer for byjlw/video-analyzer.
 
-Supports two backends:
-  github_models  – FREE, uses GitHub Models API (gpt-4o-mini by default).
-                   No extra secrets needed; GITHUB_TOKEN is enough.
-  anthropic      – Paid, uses Claude via the Anthropic API.
-                   Requires ANTHROPIC_API_KEY secret.
+Uses OpenRouter as the API gateway, so you can swap models any time by
+changing the REVIEW_MODEL repo variable — no code changes needed.
+
+Default model: qwen/qwen3-235b-a22b (set via REVIEW_MODEL env / repo var)
 
 Cost-control features:
   - Concurrency lock in the workflow (only 1 review per PR at a time).
   - Bot author filter in the workflow (skip Dependabot etc.).
-  - MAX_DIFF_LINES env var: diffs larger than this get a "please split" comment
+  - MAX_DIFF_LINES: diffs larger than this get a "please split" comment
     instead of an AI call, capping per-review token spend.
-  - max_tokens capped at 1024 (output only; input is bounded by MAX_DIFF_LINES).
+  - max_tokens capped at 1024 output tokens.
 
-Additional hardening tip: set a monthly spend limit in your Anthropic console
-at https://console.anthropic.com → Settings → Billing → Usage limits.
+To swap models without touching code:
+  Repo → Settings → Variables → Actions → set REVIEW_MODEL to any
+  model string from https://openrouter.ai/models  (e.g. "google/gemini-flash-1.5")
+
+To set a spend cap:
+  openrouter.ai → Settings → Limits → set a monthly budget.
 """
 
 from __future__ import annotations
 
 import os
 import sys
-from typing import Optional
+from openai import OpenAI       # OpenRouter is OpenAI-API-compatible
 from github import Github
 
-# ── Tuneable limits ─────────────────────────────────────────────────────────
-DEFAULT_MAX_DIFF_LINES = 800   # ~25-40 KB of patch text; well within context
-MAX_OUTPUT_TOKENS = 1024
+# ── Tuneable constants ────────────────────────────────────────────────────────
+DEFAULT_MAX_DIFF_LINES = 800    # hard cap; override via MAX_DIFF_LINES env var
+MAX_OUTPUT_TOKENS      = 1024
+OPENROUTER_BASE_URL    = "https://openrouter.ai/api/v1"
+DEFAULT_MODEL          = "qwen/qwen3-235b-a22b"
 
-# Models used per backend
-ANTHROPIC_MODEL = "claude-haiku-4-5-20251001"  # Cheapest Claude; swap to claude-sonnet-4-6 for quality
-GITHUB_MODELS_MODEL = "openai/gpt-4o-mini"     # Free tier on GitHub Models
-
-# ── Project context ──────────────────────────────────────────────────────────
+# ── Project context ───────────────────────────────────────────────────────────
 PROJECT_PHILOSOPHY = """
 ## Project: video-analyzer
 A tool that analyzes videos using vision LLMs (Ollama / OpenAI-compatible APIs)
@@ -84,7 +85,7 @@ Write clean Markdown. Keep total length under ~600 words.
 """
 
 
-# ── Diff helpers ─────────────────────────────────────────────────────────────
+# ── Diff helpers ──────────────────────────────────────────────────────────────
 
 def get_pr_diff(repo, pr_number: int) -> tuple[str, int]:
     """Return (diff_text, total_lines_changed)."""
@@ -113,42 +114,26 @@ def build_user_message(pr_title: str, pr_author: str, pr_body: str, diff: str) -
     )
 
 
-# ── AI backends ──────────────────────────────────────────────────────────────
+# ── AI call via OpenRouter ────────────────────────────────────────────────────
 
-def call_anthropic(user_message: str) -> str:
-    import anthropic  # only imported when needed
-    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-    resp = client.messages.create(
-        model=ANTHROPIC_MODEL,
-        max_tokens=MAX_OUTPUT_TOKENS,
-        system=REVIEW_SYSTEM_PROMPT + "\n\n" + PROJECT_PHILOSOPHY,
-        messages=[{"role": "user", "content": user_message}],
-    )
-    return resp.content[0].text
-
-
-def call_github_models(user_message: str) -> str:
-    """Use the GitHub Models inference endpoint – completely free."""
-    from openai import OpenAI  # openai SDK is compatible with GitHub Models
+def call_openrouter(user_message: str, model: str) -> str:
     client = OpenAI(
-        base_url="https://models.inference.ai.azure.com",
-        api_key=os.environ["GITHUB_MODELS_TOKEN"],
+        base_url=OPENROUTER_BASE_URL,
+        api_key=os.environ["OPENROUTER_API_KEY"],
     )
     resp = client.chat.completions.create(
-        model=GITHUB_MODELS_MODEL,
+        model=model,
         max_tokens=MAX_OUTPUT_TOKENS,
         messages=[
             {"role": "system", "content": REVIEW_SYSTEM_PROMPT + "\n\n" + PROJECT_PHILOSOPHY},
-            {"role": "user", "content": user_message},
+            {"role": "user",   "content": user_message},
         ],
+        extra_headers={
+            # Lets OpenRouter attribute usage to your app in their dashboard.
+            "X-Title": "video-analyzer PR reviewer",
+        },
     )
     return resp.choices[0].message.content
-
-
-def call_ai(user_message: str, backend: str) -> str:
-    if backend == "anthropic":
-        return call_anthropic(user_message)
-    return call_github_models(user_message)  # default: free
 
 
 # ── GitHub comment helpers ────────────────────────────────────────────────────
@@ -156,20 +141,25 @@ def call_ai(user_message: str, backend: str) -> str:
 BOT_MARKER = "<!-- ai-pr-review -->"
 
 
-def post_comment(repo, pr_number: int, body: str, backend: str) -> None:
-    pr = repo.get_pull(pr_number)
-    model_label = ANTHROPIC_MODEL if backend == "anthropic" else GITHUB_MODELS_MODEL
-    header = (
-        f"{BOT_MARKER}\n"
-        f"## 🤖 Automated First-Pass Review\n"
-        f"_Generated by `{model_label}`. A human maintainer will follow up._\n\n"
-        f"---\n\n"
-    )
+def _replace_bot_comment(pr, body: str) -> None:
+    """Delete the previous bot comment (if any) then post a fresh one."""
     for comment in pr.get_issue_comments():
         if BOT_MARKER in comment.body:
             comment.delete()
             break
-    pr.create_issue_comment(header + body)
+    pr.create_issue_comment(body)
+
+
+def post_review_comment(repo, pr_number: int, review: str, model: str) -> None:
+    pr = repo.get_pull(pr_number)
+    body = (
+        f"{BOT_MARKER}\n"
+        f"## 🤖 Automated First-Pass Review\n"
+        f"_Generated by `{model}` via OpenRouter. A human maintainer will follow up._\n\n"
+        f"---\n\n"
+        f"{review}"
+    )
+    _replace_bot_comment(pr, body)
 
 
 def post_too_large_comment(repo, pr_number: int, total_lines: int, limit: int) -> None:
@@ -182,14 +172,10 @@ def post_too_large_comment(repo, pr_number: int, total_lines: int, limit: int) -
         f"Please consider splitting it into smaller, focused PRs. "
         f"See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidance."
     )
-    for comment in pr.get_issue_comments():
-        if BOT_MARKER in comment.body:
-            comment.delete()
-            break
-    pr.create_issue_comment(body)
+    _replace_bot_comment(pr, body)
 
 
-# ── Main ─────────────────────────────────────────────────────────────────────
+# ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
     token      = os.environ.get("GITHUB_TOKEN")
@@ -198,21 +184,21 @@ def main() -> None:
     pr_title   = os.environ.get("PR_TITLE", "")
     pr_body    = os.environ.get("PR_BODY", "")
     pr_author  = os.environ.get("PR_AUTHOR", "")
-    backend    = os.environ.get("REVIEW_BACKEND", "github_models").strip().lower()
+    model      = os.environ.get("REVIEW_MODEL", DEFAULT_MODEL).strip()
     max_lines  = int(os.environ.get("MAX_DIFF_LINES", str(DEFAULT_MAX_DIFF_LINES)))
 
     if not all([token, repo_name, pr_number]):
         print("Missing required environment variables.", file=sys.stderr)
         sys.exit(1)
 
-    if backend == "anthropic" and not os.environ.get("ANTHROPIC_API_KEY"):
-        print("ANTHROPIC_API_KEY is required when REVIEW_BACKEND=anthropic.", file=sys.stderr)
+    if not os.environ.get("OPENROUTER_API_KEY"):
+        print("OPENROUTER_API_KEY secret is not set.", file=sys.stderr)
         sys.exit(1)
 
     gh   = Github(token)
     repo = gh.get_repo(repo_name)
 
-    print(f"Backend: {backend} | Max diff lines: {max_lines}")
+    print(f"Model: {model} | Max diff lines: {max_lines}")
     print(f"Fetching diff for PR #{pr_number}…")
     diff, total_lines = get_pr_diff(repo, pr_number)
     print(f"Diff size: {total_lines} lines changed")
@@ -222,11 +208,11 @@ def main() -> None:
         post_too_large_comment(repo, pr_number, total_lines, max_lines)
         return
 
-    print(f"Calling AI ({backend})…")
-    review = call_ai(build_user_message(pr_title, pr_author, pr_body, diff), backend)
+    print(f"Calling OpenRouter ({model})…")
+    review = call_openrouter(build_user_message(pr_title, pr_author, pr_body, diff), model)
 
     print("Posting comment…")
-    post_comment(repo, pr_number, review, backend)
+    post_review_comment(repo, pr_number, review, model)
     print("Done.")
 
 
