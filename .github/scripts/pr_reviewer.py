@@ -66,16 +66,26 @@ and OpenAI Whisper for audio. It can run fully locally or via cloud APIs.
 2. Frame Analysis - each frame sent to a vision LLM with rolling context
 3. Video Reconstruction - frame analyses + transcript merged into a final description
 
-### Contributing philosophy (from docs/CONTRIBUTING.md)
-- Changes should be proposed in GitHub Discussions *before* opening a PR.
-- PRs must reference the relevant discussion thread.
+### Contributing philosophy
 - Follow PEP 8; use type hints; keep functions focused.
 - Add/update unit tests AND integration tests for any new behaviour.
 - Update relevant .md docs and docstrings.
-- Add an entry to CHANGELOG.md.
 - Use conventional commit messages: feat/fix/docs/test/chore.
 - Dependencies live in requirements.txt; conditional markers are fine for shims.
 - Python version target: 3.11+.
+
+### Code quality rules — flag any violation
+1. SCOPE CREEP: The PR must only change what is necessary to achieve its stated goal.
+   Flag any refactoring, style fixes, whitespace changes, or edits to code that is
+   unrelated to the PR's purpose. Every changed line should be justified by the PR description.
+
+2. TEST PLAN: The PR description must include a concrete test plan explaining how the
+   author verified the change works and did not break existing functionality. This means
+   specific steps, commands, or scenarios — not just "I tested it". Flag if absent or vague.
+
+3. NEW DEPENDENCIES: New packages in requirements.txt (or setup.py install_requires) must
+   be genuinely necessary. Flag any dependency that: duplicates existing functionality,
+   could be avoided with stdlib, or is added without clear justification in the PR description.
 
 ### Code style
 - PEP 8, meaningful names, type hints on signatures, document complex logic.
@@ -89,7 +99,6 @@ You will receive PR metadata and a unified diff.
 Return a JSON object with exactly this shape — no prose outside the JSON:
 {
   "summary": "<one concise paragraph describing what the PR does>",
-  "process_issues": ["<issue string>", ...],
   "recommendation": "APPROVE" | "REQUEST_CHANGES" | "DISCUSS",
   "recommendation_reason": "<one sentence>",
   "inline_comments": [
@@ -102,12 +111,19 @@ Return a JSON object with exactly this shape — no prose outside the JSON:
   ]
 }
 
-Rules:
-- inline_comments should only cover real issues (bugs, style violations, missing
-  tests, doc gaps). Omit praise or trivial nits unless they matter.
-- process_issues covers things like missing CHANGELOG entry, no discussion link,
-  wrong commit format — not code-level issues.
-- Keep total inline_comments under 8 to avoid overwhelming the author.
+Rules for inline_comments:
+- Flag real issues only: bugs, scope creep (unnecessary changes), missing or vague
+  test plan, unjustified new dependencies, type hint omissions, doc gaps.
+- DO NOT comment on style or formatting that is already consistent with the surrounding
+  code, and DO NOT suggest changes to code that is not touched by this PR.
+- If the PR description lacks a concrete test plan (specific steps/commands to verify
+  the change works and didn't break anything), raise it as an inline comment on the
+  first changed file.
+- If a new dependency is added, verify it is justified. Flag it if the same thing
+  could be done with the stdlib or an already-present package.
+- If any changed lines appear to be unrelated style fixes or refactoring not mentioned
+  in the PR description, flag them as scope creep.
+- Keep total inline_comments under 12.
 - Return ONLY valid JSON. No markdown fences, no preamble.
 """
 
@@ -252,11 +268,6 @@ def post_summary_comment(pr: PullRequest, review: dict,
     """Replace the previous bot summary comment with the new one."""
     emoji = RECOMMENDATION_EMOJI.get(review.get("recommendation", ""), "🤖")
     incremental_note = " _(incremental — only new commits reviewed)_" if is_incremental else ""
-    process_issues = review.get("process_issues", [])
-    process_block = ""
-    if process_issues:
-        items = "\n".join(f"- {i}" for i in process_issues)
-        process_block = f"\n\n### Process issues\n{items}"
 
     body = (
         f"{BOT_MARKER}\n"
@@ -264,8 +275,7 @@ def post_summary_comment(pr: PullRequest, review: dict,
         f"## 🤖 Automated First-Pass Review{incremental_note}\n"
         f"_Model: `{model}` via OpenRouter. A human maintainer will follow up._\n\n"
         f"---\n\n"
-        f"### Summary\n{review.get('summary', '_No summary generated._')}"
-        f"{process_block}\n\n"
+        f"### Summary\n{review.get('summary', '_No summary generated._')}\n\n"
         f"### Recommendation\n"
         f"{emoji} **{review.get('recommendation', '?')}** — "
         f"{review.get('recommendation_reason', '')}\n"
