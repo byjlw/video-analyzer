@@ -88,6 +88,7 @@ The tool uses a cascading configuration system with the following priority:
     "narrative": 1024
   },
   "audio": {
+    "backend": "faster-whisper",
     "sample_rate": 16000,
     "channels": 1,
     "quality_threshold": 0.5,
@@ -123,12 +124,18 @@ The tool uses a cascading configuration system with the following priority:
 - `response_length.narrative`: Max length for enhanced narrative
 
 #### Audio Processing Settings
+- `audio.backend`: Whisper backend to use (`faster-whisper` or `mlx-whisper`)
 - `audio.sample_rate`: Audio sample rate in Hz
 - `audio.channels`: Number of audio channels
 - `audio.quality_threshold`: Minimum quality for transcription
 - `audio.chunk_length`: Audio chunk processing length
 - `audio.language_confidence_threshold`: Language detection confidence
 - `audio.language`: Force specific language (null for auto-detect)
+
+### Current Behavior Notes
+
+- `audio.backend` defaults to `faster-whisper`.
+- `mlx-whisper` is intended for Apple Silicon environments and may require installing optional MLX dependencies with `pip install \".[mlx]\"`.
 
 #### General Settings
 - `prompt_dir`: Custom prompt directory path
