@@ -84,6 +84,8 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install .  # For regular installation
 # OR
 pip install -e .  # For development installation
+# OR
+pip install ".[dev]"  # For development with test dependencies
 ```
 
 4. Install FFmpeg:
@@ -131,7 +133,7 @@ If you want to use OpenAI-compatible APIs (like OpenRouter or OpenAI) instead of
    video-analyzer video.mp4 --client openai_api --api-key your-key --api-url https://api.openai.com/v1 --model gpt-4o
    ```
 
-   Or add to config/config.json:
+   Or add to `config/config.json` (or another JSON file passed via `--config`):
    ```json
    {
      "clients": {
@@ -187,7 +189,7 @@ The video begins with a person with long blonde hair, wearing a pink t-shirt and
 full sample output in `docs/sample_analysis.json`
 ## Configuration
 
-The tool uses a cascading configuration system with command line arguments taking highest priority, followed by user config (config/config.json), and finally the default config. See [docs/USAGES.md](docs/USAGES.md) for detailed configuration options.
+The tool uses a cascading configuration system with command line arguments taking highest priority, followed by user config (`config/config.json` by default, or the JSON file passed via `--config`), and finally the packaged default config. See [docs/USAGES.md](docs/USAGES.md) for detailed configuration options.
 
 
 ## Prompt Tuning

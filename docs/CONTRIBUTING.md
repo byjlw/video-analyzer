@@ -43,10 +43,20 @@ Once your proposal has been discussed and approved:
    - Include type hints
    - Write clear commit messages
 
+   Install development dependencies before working on tests:
+   ```bash
+   python -m pip install ".[dev]"
+   ```
+
 3. Add tests for new functionality:
    - Unit tests for individual components
    - Integration tests for feature workflows
    - Ensure all tests pass
+
+   Run the root test suite with:
+   ```bash
+   pytest
+   ```
 
 4. Update documentation:
    - Add/update docstrings

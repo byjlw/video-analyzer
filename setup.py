@@ -6,7 +6,9 @@ with open("readme.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 with open("requirements.txt", "r", encoding="utf-8") as fh:
-    requirements = [line.strip() for line in fh if line.strip() and not line.startswith("#")]
+    requirements = [
+        line.strip() for line in fh if line.strip() and not line.startswith("#")
+    ]
 
 setup(
     name="video-analyzer",
@@ -17,17 +19,20 @@ setup(
     long_description_content_type="text/markdown",
     packages=find_packages(),
     package_data={
-        'video_analyzer': [
-            'config/*.json',
-            'prompts/**/*',
+        "video_analyzer": [
+            "config/*.json",
+            "prompts/**/*",
         ],
     },
     install_requires=requirements,
+    extras_require={
+        "dev": ["pytest"],
+    },
     entry_points={
         "console_scripts": [
             "video-analyzer=video_analyzer.cli:main",
         ],
     },
     python_requires=">=3.8",
-    include_package_data=True
+    include_package_data=True,
 )
