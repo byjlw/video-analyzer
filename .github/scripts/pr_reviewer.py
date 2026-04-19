@@ -68,9 +68,14 @@ and OpenAI Whisper for audio. It can run fully locally or via cloud APIs.
    duplicates existing functionality, could be replaced by the stdlib, or is
    added without clear justification in the PR description.
 
-### Code style
-- PEP 8, meaningful names, type hints on signatures, document complex logic.
-- Tests for new features + edge cases.
+4. BACKWARDS COMPATIBILITY: The user-facing interface must not break.
+   This includes:
+   - CLI commands and flags (anything in cli.py or documented in docs/USAGES.md)
+   - Config file keys and structure (config/config.json schema)
+   - Output format and JSON schema (anything consumers of the JSON output rely on)
+   Flag any change that renames, removes, or alters the behaviour of an existing
+   CLI argument, config key, or output field — even if a new alternative is added.
+   Deprecations are acceptable only if the old interface still works unchanged.
 """
 
 SUMMARY_PROMPT = """
@@ -93,7 +98,8 @@ Return a JSON object with exactly this shape — no prose outside the JSON:
 
 Rules for inline_comments:
 - Flag real issues only: bugs, scope creep (unnecessary changes), missing or
-  vague test plan, unjustified new dependencies, type hint omissions, doc gaps.
+  vague test plan, unjustified new dependencies, type hint omissions, doc gaps,
+  and backwards compatibility breaks.
 - DO NOT comment on style or formatting that is already consistent with the
   surrounding code, and DO NOT suggest changes to code not touched by this PR.
 - If the PR description lacks a concrete test plan (specific steps/commands to
@@ -103,6 +109,9 @@ Rules for inline_comments:
   thing could be done with the stdlib or an already-present package.
 - If any changed lines appear to be unrelated style fixes or refactoring not
   mentioned in the PR description, flag them as scope creep.
+- If any CLI argument, config key, or output field is renamed, removed, or
+  changes its behaviour, flag it as a backwards compatibility break. The old
+  interface must continue to work unchanged.
 - Keep total inline_comments under 12.
 - Return ONLY valid JSON. No markdown fences, no preamble.
 """
