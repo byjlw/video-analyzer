@@ -65,10 +65,14 @@ class Config:
                 elif key == "ollama_url":
                     self.config["clients"]["ollama"]["url"] = value
                 elif key == "api_key":
-                    self.config["clients"]["openai_api"]["api_key"] = value
-                    # If key is provided but no client specified, use OpenAI API
-                    if not args.client:
-                        self.config["clients"]["default"] = "openai_api"
+                    # Route the key to the selected client (defaults to openai_api).
+                    if args.client == "twelvelabs":
+                        self.config["clients"].setdefault("twelvelabs", {})["api_key"] = value
+                    else:
+                        self.config["clients"]["openai_api"]["api_key"] = value
+                        # If key is provided but no client specified, use OpenAI API
+                        if not args.client:
+                            self.config["clients"]["default"] = "openai_api"
                 elif key == "api_url":
                     self.config["clients"]["openai_api"]["api_url"] = value
                 elif key == "model":
@@ -118,6 +122,11 @@ def get_client(config: Config) -> dict:
             "api_key": api_key,
             "api_url": api_url
         }
+    elif client_type == "twelvelabs":
+        api_key = client_config.get("api_key")
+        if not api_key:
+            raise ValueError("API key is required when using the TwelveLabs client")
+        return {"api_key": api_key}
     else:
         raise ValueError(f"Unknown client type: {client_type}")
 
@@ -125,4 +134,5 @@ def get_model(config: Config) -> str:
     """Get the appropriate model based on client type and configuration."""
     client_type = config.get("clients", {}).get("default", "ollama")
     client_config = config.get("clients", {}).get(client_type, {})
-    return client_config.get("model", "llama3.2-vision")
+    default_model = "pegasus1.5" if client_type == "twelvelabs" else "llama3.2-vision"
+    return client_config.get("model", default_model)

@@ -15,6 +15,7 @@ from .analyzer import VideoAnalyzer
 from .audio_processor import AudioProcessor, AudioTranscript
 from .clients.ollama import OllamaClient
 from .clients.generic_openai_api import GenericOpenAIAPIClient
+from .clients.twelvelabs import TwelveLabsClient
 
 # Initialize logger at module level
 logger = logging.getLogger(__name__)
@@ -54,8 +55,57 @@ def create_client(config: Config):
         return OllamaClient(client_config["url"])
     elif client_type == "openai_api":
         return GenericOpenAIAPIClient(client_config["api_key"], client_config["api_url"])
+    elif client_type == "twelvelabs":
+        return TwelveLabsClient(client_config["api_key"], get_model(config))
     else:
         raise ValueError(f"Unknown client type: {client_type}")
+
+def run_twelvelabs(args, config: Config, client, model: str, output_dir: Path):
+    """Run a single whole-video analysis using TwelveLabs' Pegasus model.
+
+    Pegasus reasons jointly over visuals, motion, and audio, so it replaces
+    the frame-sampling, transcription, and reconstruction stages with one call.
+    Results are written to the same analysis.json shape used by the other
+    clients so downstream tooling continues to work.
+    """
+    user_prompt = config.get("prompt", "") or "Describe what happens in this video in detail."
+    temperature = config.get("clients", {}).get("temperature", 0.2)
+    max_tokens = config.get("response_length", {}).get("reconstruction", 2048)
+
+    logger.info(f"Analyzing video with TwelveLabs model {model}...")
+    video_description = client.analyze_video(
+        video=str(args.video_path),
+        prompt=user_prompt,
+        temperature=temperature,
+        max_tokens=max_tokens,
+    )
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    results = {
+        "metadata": {
+            "client": "twelvelabs",
+            "model": model,
+            "whisper_model": None,
+            "frames_per_minute": None,
+            "duration_processed": config.get("duration"),
+            "frames_extracted": 0,
+            "frames_processed": 0,
+            "start_stage": args.start_stage,
+            "audio_language": None,
+            "transcription_successful": False
+        },
+        "transcript": None,
+        "frame_analyses": [],
+        "video_description": video_description
+    }
+
+    with open(output_dir / "analysis.json", "w") as f:
+        json.dump(results, f, indent=2)
+
+    logger.info("\nVideo Description:")
+    logger.info(video_description.get("response", "No description generated"))
+    logger.info(f"Analysis complete. Results saved to {output_dir / 'analysis.json'}")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Analyze video using Vision models")
@@ -63,7 +113,7 @@ def main():
     parser.add_argument("--config", type=str, default="config",
                         help="Path to configuration directory")
     parser.add_argument("--output", type=str, help="Output directory for analysis results")
-    parser.add_argument("--client", type=str, help="Client to use (ollama or openrouter)")
+    parser.add_argument("--client", type=str, help="Client to use (ollama, openai_api, or twelvelabs)")
     parser.add_argument("--ollama-url", type=str, help="URL for the Ollama service")
     parser.add_argument("--api-key", type=str, help="API key for OpenAI-compatible service")
     parser.add_argument("--api-url", type=str, help="API URL for OpenAI-compatible API")
@@ -103,14 +153,20 @@ def main():
     output_dir = Path(config.get("output_dir"))
     client = create_client(config)
     model = get_model(config)
+    client_type = config.get("clients", {}).get("default", "ollama")
     prompt_loader = PromptLoader(config.get("prompt_dir"), config.get("prompts", []))
-    
+
+    # TwelveLabs' Pegasus model ingests the whole video in one call, so it
+    # bypasses the frame-extraction / transcription / reconstruction pipeline.
+    if client_type == "twelvelabs":
+        return run_twelvelabs(args, config, client, model, output_dir)
+
     try:
         transcript = None
         frames = []
         frame_analyses = []
         video_description = None
-        
+
         # Stage 1: Frame and Audio Processing
         if args.start_stage <= 1:
             # Initialize audio processor and extract transcript, the AudioProcessor accept following parameters that can be set in config.json:
