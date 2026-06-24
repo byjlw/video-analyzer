@@ -7,3 +7,5 @@ Pillow>=10.0.0
 pydub>=0.25.1
 audioop-lts>=0.2.2; python_version >= "3.13"
 faster-whisper>=0.6.0
+# Optional: only needed for the TwelveLabs (Pegasus) client (--client twelvelabs)
+twelvelabs>=1.2.8

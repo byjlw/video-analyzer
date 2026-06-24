@@ -26,6 +26,7 @@ A video analysis tool that combines vision models like Llama's 11B vision model 
 ## Features
 - 💻 Can run completely locally - no cloud services or API keys needed
 - ☁️  Or, leverage any OpenAI API compatible LLM service (openrouter, openai, etc) for speed and scale
+- 🎥 Or, analyze the entire video in a single call with [TwelveLabs Pegasus](https://twelvelabs.io) — no frame extraction or transcription needed
 - 🎬 Intelligent key frame extraction from videos
 - 🔊 High-quality audio transcription using OpenAI's Whisper
 - 👁️ Frame analysis using Ollama and Llama3.2 11B Vision Model
@@ -146,6 +147,39 @@ If you want to use OpenAI-compatible APIs (like OpenRouter or OpenAI) instead of
 
 Note: With OpenRouter, you can use llama 3.2 11b vision for free by adding :free to the model name
 
+### TwelveLabs Setup (Optional)
+
+[TwelveLabs](https://twelvelabs.io) offers Pegasus, a video understanding model
+that ingests an entire video in a single call and reasons jointly over its
+visuals, motion, and audio. When this client is selected, the frame-extraction,
+Whisper transcription, and reconstruction stages are skipped — Pegasus produces
+the description directly from the video.
+
+1. Install the optional dependency:
+   ```bash
+   pip install twelvelabs
+   ```
+
+2. Get an API key from [twelvelabs.io](https://twelvelabs.io) — there's a generous free tier.
+
+3. Run with the TwelveLabs client (the video may be a local file or a public URL):
+   ```bash
+   video-analyzer video.mp4 --client twelvelabs --api-key your-key
+   ```
+
+   Or add to config/config.json:
+   ```json
+   {
+     "clients": {
+       "default": "twelvelabs",
+       "twelvelabs": {
+         "api_key": "your-api-key",
+         "model": "pegasus1.5"
+       }
+     }
+   }
+   ```
+
 ## Design
 For detailed information about the project's design and implementation, including how to make changes, see [docs/DESIGN.md](docs/DESIGN.md).
 
@@ -165,6 +199,11 @@ video-analyzer video.mp4 \
     --api-key your-key \
     --api-url https://openrouter.ai/api/v1 \
     --model meta-llama/llama-3.2-11b-vision-instruct:free
+
+# Whole-video analysis with TwelveLabs Pegasus
+video-analyzer video.mp4 \
+    --client twelvelabs \
+    --api-key your-key
 
 # Analysis with custom prompt
 video-analyzer video.mp4 \

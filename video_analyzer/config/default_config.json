@@ -10,6 +10,10 @@
             "api_key": "",
             "model": "meta-llama/llama-3.2-11b-vision-instruct",
             "api_url": "https://openrouter.ai/api/v1"
+        },
+        "twelvelabs": {
+            "api_key": "",
+            "model": "pegasus1.5"
         }
     },
     "prompt_dir": "prompts",
