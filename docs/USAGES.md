@@ -16,9 +16,13 @@ This guide covers all configuration options and command line arguments for the v
 video-analyzer path/to/video.mp4
 ```
 
-### Using OpenAI-Compatible API (OpenRouter/OpenAI)
+### Using OpenAI-Compatible API (OpenRouter/Requesty/OpenAI)
 ```bash
+# OpenRouter
 video-analyzer path/to/video.mp4 --client openai_api --api-key your-key --api-url https://openrouter.ai/api/v1
+
+# Requesty
+video-analyzer path/to/video.mp4 --client openai_api --api-key your-key --api-url https://router.requesty.ai/v1 --model openai/gpt-4o-mini
 ```
 
 ## Command Line Arguments
@@ -31,7 +35,7 @@ video-analyzer path/to/video.mp4 --client openai_api --api-key your-key --api-ur
 | `--client` | Client to use (ollama or openai_api) | ollama | `--client openai_api` |
 | `--ollama-url` | URL for the Ollama service | http://localhost:11434 | `--ollama-url http://localhost:11434` |
 | `--api-key` | API key for OpenAI-compatible service | None | `--api-key sk-xxx...` |
-| `--api-url` | API URL for OpenAI-compatible API | None | `--api-url https://openrouter.ai/api/v1` |
+| `--api-url` | API URL for OpenAI-compatible API | None | `--api-url https://openrouter.ai/api/v1` (or `https://router.requesty.ai/v1`) |
 | `--model` | Name of the vision model to use | llama3.2-vision | `--model gpt-4-vision-preview` |
 | `--duration` | Duration in seconds to process | None (full video) | `--duration 60` |
 | `--keep-frames` | Keep extracted frames after analysis | False | `--keep-frames` |
@@ -195,6 +199,22 @@ video-analyzer video.mp4 \
     --api-key your-key \
     --api-url https://openrouter.ai/api/v1 \
     --model meta-llama/llama-3.2-11b-vision-instruct:free \
+    --duration 120 \
+    --whisper-model large \
+    --keep-frames \
+    --log-level DEBUG \
+    --prompt "Focus on the interactions between people"
+```
+
+### Full Configuration with Requesty
+```bash
+video-analyzer video.mp4 \
+    --config custom_config.json \
+    --output ./analysis_results \
+    --client openai_api \
+    --api-key your-key \
+    --api-url https://router.requesty.ai/v1 \
+    --model openai/gpt-4o-mini \
     --duration 120 \
     --whisper-model large \
     --keep-frames \

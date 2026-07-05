@@ -25,7 +25,7 @@ A video analysis tool that combines vision models like Llama's 11B vision model 
 
 ## Features
 - 💻 Can run completely locally - no cloud services or API keys needed
-- ☁️  Or, leverage any OpenAI API compatible LLM service (openrouter, openai, etc) for speed and scale
+- ☁️  Or, leverage any OpenAI API compatible LLM service (openrouter, requesty, openai, etc) for speed and scale
 - 🎬 Intelligent key frame extraction from videos
 - 🔊 High-quality audio transcription using OpenAI's Whisper
 - 👁️ Frame analysis using Ollama and Llama3.2 11B Vision Model
@@ -116,16 +116,20 @@ ollama serve
 
 ### OpenAI-compatible API Setup (Optional)
 
-If you want to use OpenAI-compatible APIs (like OpenRouter or OpenAI) instead of Ollama:
+If you want to use OpenAI-compatible APIs (like OpenRouter, Requesty, or OpenAI) instead of Ollama:
 
 1. Get an API key from your provider:
    - [OpenRouter](https://openrouter.ai)
+   - [Requesty](https://app.requesty.ai/api-keys)
    - [OpenAI](https://platform.openai.com)
 
 2. Configure via command line:
    ```bash
    # For OpenRouter
    video-analyzer video.mp4 --client openai_api --api-key your-key --api-url https://openrouter.ai/api/v1 --model gpt-4o
+
+   # For Requesty
+   video-analyzer video.mp4 --client openai_api --api-key your-key --api-url https://router.requesty.ai/v1 --model openai/gpt-4o-mini
 
    # For OpenAI
    video-analyzer video.mp4 --client openai_api --api-key your-key --api-url https://api.openai.com/v1 --model gpt-4o
@@ -138,13 +142,15 @@ If you want to use OpenAI-compatible APIs (like OpenRouter or OpenAI) instead of
        "default": "openai_api",
        "openai_api": {
          "api_key": "your-api-key",
-         "api_url": "https://openrouter.ai/api/v1"  # or https://api.openai.com/v1
+         "api_url": "https://openrouter.ai/api/v1"  # or https://router.requesty.ai/v1 or https://api.openai.com/v1
        }
      }
    }
    ```
 
 Note: With OpenRouter, you can use llama 3.2 11b vision for free by adding :free to the model name
+
+Note: [Requesty](https://requesty.ai) is another OpenAI-compatible router. Use the base URL `https://router.requesty.ai/v1`, authenticate with an `Authorization: Bearer` API key from [app.requesty.ai/api-keys](https://app.requesty.ai/api-keys), and reference models in `provider/model` form (e.g. `openai/gpt-4o` or the vision-capable `openai/gpt-4o-mini`).
 
 ## Design
 For detailed information about the project's design and implementation, including how to make changes, see [docs/DESIGN.md](docs/DESIGN.md).
@@ -165,6 +171,13 @@ video-analyzer video.mp4 \
     --api-key your-key \
     --api-url https://openrouter.ai/api/v1 \
     --model meta-llama/llama-3.2-11b-vision-instruct:free
+
+# Cloud analysis with Requesty
+video-analyzer video.mp4 \
+    --client openai_api \
+    --api-key your-key \
+    --api-url https://router.requesty.ai/v1 \
+    --model openai/gpt-4o-mini
 
 # Analysis with custom prompt
 video-analyzer video.mp4 \
